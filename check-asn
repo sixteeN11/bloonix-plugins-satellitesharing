@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+
+#------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use Bloonix::IPC::Cmd;
+
+#------------------------------------------------------------------------------
+
+my $plugin = Bloonix::Plugin->new();
+
+$plugin->version("0.1");
+
+$plugin->example(
+    description => "Check ASN of host's public IP",
+    arguments   => []
+);
+
+$plugin->has_threshold( keys => [ { key => 'time' } ] );
+$plugin->has_timeout( default => 10 );
+$plugin->add_option(
+    name        => "Expected ASN",
+    option      => "asn",
+    value       => "37103",
+    value_type  => "string",
+    mandatory   => 0,
+    description => "This is the ASN you expect it to return."
+);
+
+# --------------------------------------------------
+# Parse options
+# --------------------------------------------------
+
+my $opt = $plugin->parse_options;
+
+# --------------------------------------------------
+# ASN request
+# --------------------------------------------------
+
+my $cmd
+    = 'whois -h whois.cymru.com $(dig +short myip.opendns.com @resolver1.opendns.com) | awk \'FNR==2{print $1}\'';
+
+my $time = $plugin->runtime;
+my $ipc  = $plugin->execute(
+    command     => "$cmd",
+    timeout     => $opt->{timeout},
+    kill_signal => 9
+);
+$time = $plugin->runtime;
+
+my $asn = $ipc->stdout->[0];
+chomp($asn);
+if ( $opt->{asn} && $asn ne $opt->{asn} ) {
+
+    $plugin->exit(
+        status  => "WARNING",
+        message => "ASN: $asn, expected $opt->{asn}",
+        stats   => { asn => $asn, time => $time }
+    );
+} else {
+
+    $plugin->exit(
+        status  => "OK",
+        message => "AS$asn",
+        stats   => { asn => "$asn", time => $time }
+    );
+}
