@@ -1733,7 +1733,7 @@ statistic {
 
 statistic {
     statkey backend1_happy
-    alias Happy health probes
+    alias Backend 1 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1741,7 +1741,7 @@ statistic {
 
 statistic {
     statkey backend2_happy
-    alias Happy health probes
+    alias Backend 2 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1749,7 +1749,7 @@ statistic {
 
 statistic {
     statkey backend3_happy
-    alias Happy health probes
+    alias Backend 3 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1757,7 +1757,7 @@ statistic {
 
 statistic {
     statkey backend4_happy
-    alias Happy health probes
+    alias Backend 4 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1765,7 +1765,7 @@ statistic {
 
 statistic {
     statkey backend5_happy
-    alias Happy health probes
+    alias Backend 5 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1773,7 +1773,7 @@ statistic {
 
 statistic {
     statkey backend6_happy
-    alias Happy health probes
+    alias Backend 6 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1781,7 +1781,7 @@ statistic {
 
 statistic {
     statkey backend7_happy
-    alias Happy health probes
+    alias Backend 7 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1789,7 +1789,7 @@ statistic {
 
 statistic {
     statkey backend8_happy
-    alias Happy health probes
+    alias Backend 8 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1797,7 +1797,7 @@ statistic {
 
 statistic {
     statkey backend9_happy
-    alias Happy health probes
+    alias Backend 9 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -1805,7 +1805,7 @@ statistic {
 
 statistic {
     statkey backend10_happy
-    alias Happy health probes
+    alias Backend 10 Happy health probes
     datatype float
     description Happy health probes
     stattype string
@@ -3443,10 +3443,6 @@ chart {
         ylabel count
         chart-type area
         series {
-            name backend1_happy
-            color \#e9644a
-        }
-        series {
             name backend1_bereq_hdrbytes
             color \#ffb244
         }
@@ -3487,10 +3483,6 @@ chart {
     options {
         ylabel count
         chart-type area
-        series {
-            name backend2_happy
-            color \#e9644a
-        }
         series {
             name backend2_bereq_hdrbytes
             color \#ffb244
@@ -3533,10 +3525,6 @@ chart {
         ylabel count
         chart-type area
         series {
-            name backend3_happy
-            color \#e9644a
-        }
-        series {
             name backend3_bereq_hdrbytes
             color \#ffb244
         }
@@ -3578,10 +3566,6 @@ chart {
         ylabel count
         chart-type area
         series {
-            name backend4_happy
-            color \#e9644a
-        }
-        series {
             name backend4_bereq_hdrbytes
             color \#ffb244
         }
@@ -3612,6 +3596,31 @@ chart {
         series {
             name backend4_conn
             color \#bf00bf
+        }
+    }
+}
+
+chart {
+    id 18
+    title Varnish - Happy health probes
+    options {
+        ylabel count
+        chart-type line
+        series {
+            name backend1_happy
+            color \#ffb244
+        }
+        series {
+            name backend2_happy
+            color \#9a72ad
+        }
+        series {
+            name backend3_happy
+            color \#005467
+        }
+        series {
+            name backend4_happy
+            color \#e9644a
         }
     }
 }
