@@ -243,6 +243,18 @@ foreach my $line ( @{ $ipc->stdout } ) {
             }
             $statkey = "backend${backend_count}_$key";
 
+            # The VBE happy counter is a 64-bit number that has a bit set for
+            # each probe so convert it to a number that indicates the number of
+            # probes.
+
+            if ($key eq 'happy' && $value) {
+                my $probes = 0;
+                for ( my $bit = 0; $bit < 64; $bit++ ) { 
+                    $probes++ if $value & ( 1 << $bit );
+                }   
+                $value = $probes;
+            }
+
         } else {
             my ($key) = $name =~ /\.([^\.]+)$/;
             $statkey = "\L$name";
