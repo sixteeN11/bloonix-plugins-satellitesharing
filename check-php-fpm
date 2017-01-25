@@ -1,0 +1,127 @@
+#!/usr/bin/perl
+
+#------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+
+#------------------------------------------------------------------------------
+
+my $plugin = Bloonix::Plugin->new( version => "0.1" );
+
+$plugin->add_option(
+    name       => "URL",
+    option     => "url",
+    value      => "url",
+    value_type => "string",
+    mandatory  => 1,
+    prepare    => sub {
+        if ( $_[0] =~ m@^https{0,1}://[^/]+\z@ ) {
+            $_[0] = "$_[0]/";
+        }
+    },
+    regex       => qr@^https{0,1}://[^']+/[^\s']*\z@,
+    description => "This is the full URL to get the PHP-FPM status from."
+);
+
+$plugin->has_threshold(
+    keys => [qw( slow connections active total listen )] );
+$plugin->has_timeout( default => 10 );
+$plugin->has_auth_basic;
+$plugin->has_host;
+$plugin->has_use_ipv6;
+
+$plugin->example(
+    description => "Check PHP-FPM status",
+    arguments   => [
+        url      => "http://localhost/fpm_status",
+        critical => "slow:gt:5",
+        warning  => "connections:gt:200",
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+my $curl = "curl --retry 0 --silent";
+
+$curl .= " --insecure" if $opt->{url} =~ /^https/;
+$curl .= " --basic --user '$opt->{username}:$opt->{password}'"
+    if $opt->{username} && $opt->{password};
+$curl .= " --ipv6" if $opt->{use_ipv6};
+
+if ( $opt->{host} ) {
+    my $replace = $opt->{host};
+    $opt->{url} =~ m!^(http|https)://(.+?)/!;
+    my $proto = $1;
+    $opt->{host} = $2;
+    if ( $opt->{host} =~ s/:(\d+)\z// ) {
+        $replace .= ":$1";
+    }
+    $opt->{url} =~ s!^$proto://$opt->{host}/!$proto://$replace/!;
+    $curl .= " --header 'Host: $opt->{host}'";
+}
+
+my ($content);
+eval {
+    $SIG{__DIE__} = sub { alarm(0) };
+    $SIG{ALRM}    = sub { die "timeout\n" };
+    alarm( $opt->{timeout} );
+    $content = qx{$curl $opt->{url} 2>>/dev/null};
+
+    if ( $? > 0 ) {
+        my $err = $? >> 8;
+        die "curl error code $err\n";
+    }
+
+    alarm(0);
+};
+
+if ($@) {
+    if ( $@ =~ /^timeout/ ) {
+        $plugin->exit(
+            status  => "CRITICAL",
+            message => "request timed out after $opt->{timeout} seconds",
+            tags    => "timeout"
+        );
+    } else {
+        my $err = $@;
+        chomp($err);
+        $err =~ s/\n/ /g;
+        $plugin->exit(
+            status  => "CRITICAL",
+            message => $err
+        );
+    }
+}
+
+# Parse $content
+my %data;
+$data{$1} = $2 while $content =~ /\G\s*([^:]+):\s*(.*)/gmc;
+
+my %keys = (
+    'accepted conn'        => 'connections',
+    'listen queue'         => 'listen',
+    'max listen queue'     => 'max_listen',
+    'max children reached' => 'max_children',
+    'active processes'     => 'active',
+    'idle processes'       => 'idle',
+    'total processes'      => 'total',
+    'listen queue len'     => 'listen_len',
+    'slow requests'        => 'slow',
+    'max active processes' => 'max_active',
+    'start since'          => 'uptime',
+    'start time'           => 'started',
+    'process manager'      => 'pm',
+    'pool'                 => 'pool',
+);
+
+my %stat = map { $keys{$_}, exists $data{$_} ? $data{$_} : 0 } keys %keys;
+
+$plugin->delta( stat => \%stat, keys => [qw( uptime connections )]);
+
+$plugin->check_thresholds(
+    stats       => \%stat,
+    upshot_keys => [qw(pool started active idle slow)],
+    exit        => "yes"
+);
