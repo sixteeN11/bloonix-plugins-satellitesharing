@@ -1,0 +1,299 @@
+#!/usr/bin/perl
+
+#------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use Bloonix::IPC::Cmd;
+
+#------------------------------------------------------------------------------
+
+my @THRESHOLDS = (
+    { key => "cache_hit_ratio" },
+    { key => "cache_hitpass_ratio" },
+    { key => "cache_miss_ratio" },
+    { key => 'uptime' },
+    { key => 'sess_conn' },
+    { key => 'sess_drop' },
+    { key => 'sess_fail' },
+    { key => 'client_req_400' },
+    { key => 'client_req_417' },
+    { key => 'client_req' },
+    { key => 'cache_hit' },
+    { key => 'cache_hitpass' },
+    { key => 'cache_miss' },
+    { key => 'backend_conn' },
+    { key => 'backend_unhealthy' },
+    { key => 'backend_busy' },
+    { key => 'backend_fail' },
+    { key => 'backend_reuse' },
+    { key => 'backend_recycle' },
+    { key => 'backend_retry' },
+    { key => 'fetch_head' },
+    { key => 'fetch_length' },
+    { key => 'fetch_chunked' },
+    { key => 'fetch_eof' },
+    { key => 'fetch_bad' },
+    { key => 'fetch_none' },
+    { key => 'fetch_1xx' },
+    { key => 'fetch_204' },
+    { key => 'fetch_304' },
+    { key => 'fetch_failed' },
+    { key => 'fetch_no_thread' },
+    { key => 'pools' },
+    { key => 'threads' },
+    { key => 'threads_limited' },
+    { key => 'threads_created' },
+    { key => 'threads_destroyed' },
+    { key => 'threads_failed' },
+    { key => 'thread_queue_len' },
+    { key => 'busy_sleep' },
+    { key => 'busy_wakeup' },
+    { key => 'busy_killed' },
+    { key => 'sess_queued' },
+    { key => 'sess_dropped' },
+    { key => 'n_object' },
+    { key => 'n_vampireobject' },
+    { key => 'n_objectcore' },
+    { key => 'n_objecthead' },
+    { key => 'n_backend' },
+    { key => 'n_expired' },
+    { key => 'n_lru_nuked' },
+    { key => 'n_lru_moved' },
+    { key => 'losthdr' },
+    { key => 's_sess' },
+    { key => 's_req' },
+    { key => 's_pipe' },
+    { key => 's_pass' },
+    { key => 's_fetch' },
+    { key => 's_synth' },
+    { key => 's_req_hdrbytes', unit => 'bytes' },
+    { key => 's_req_bodybytes', unit => 'bytes' },
+    { key => 's_resp_hdrbytes', unit => 'bytes' },
+    { key => 's_resp_bodybytes', unit => 'bytes' },
+    { key => 's_pipe_hdrbytes', unit => 'bytes' },
+    { key => 's_pipe_in', unit => 'bytes' },
+    { key => 's_pipe_out', unit => 'bytes' },
+    { key => 'sess_closed' },
+    { key => 'sess_closed_err' },
+    { key => 'sess_readahead' },
+    { key => 'sess_herd' },
+    { key => 'shm_records' },
+    { key => 'shm_writes' },
+    { key => 'shm_flushes' },
+    { key => 'shm_cont' },
+    { key => 'shm_cycles' },
+    { key => 'backend_req' },
+    { key => 'n_vcl' },
+    { key => 'n_vcl_avail' },
+    { key => 'n_vcl_discard' },
+    { key => 'bans' },
+    { key => 'bans_completed' },
+    { key => 'bans_obj' },
+    { key => 'bans_req' },
+    { key => 'bans_added' },
+    { key => 'bans_deleted' },
+    { key => 'bans_tested' },
+    { key => 'bans_obj_killed' },
+    { key => 'bans_lurker_tested' },
+    { key => 'bans_tests_tested' },
+    { key => 'bans_lurker_tests_tested' },
+    { key => 'bans_lurker_obj_killed' },
+    { key => 'bans_dups' },
+    { key => 'bans_lurker_contention' },
+    { key => 'bans_persisted_bytes', unit => 'bytes' },
+    { key => 'bans_persisted_fragmenta', unit => 'bytes' },
+    { key => 'n_purges' },
+    { key => 'n_obj_purged' },
+    { key => 'exp_mailed' },
+    { key => 'exp_received' },
+    { key => 'hcb_nolock' },
+    { key => 'hcb_lock' },
+    { key => 'hcb_insert' },
+    { key => 'esi_errors' },
+    { key => 'esi_warnings' },
+    { key => 'vmods' },
+    { key => 'n_gzip' },
+    { key => 'n_gunzip' },
+    { key => 'vsm_free', unit => 'bytes' },
+    { key => 'vsm_used', unit => 'bytes' },
+    { key => 'vsm_cooling', unit => 'bytes' },
+    { key => 'vsm_overflow', unit => 'bytes' },
+    { key => 'vsm_overflowed', unit => 'bytes' },
+    { key => 'backend_toolate' },
+    { key => 'client_req_411' },
+    { key => 'client_req_413' },
+    { key => 'fetch_close' },
+    { key => 'fetch_oldhttp' },
+    { key => 'fetch_zero' },
+    { key => 'n_waitinglist' },
+    { key => 'sess_pipe_overflow' },
+    { key => 'sess_pipeline' },
+    { key => 'sms_balloc', unit => 'bytes' },
+    { key => 'sms_bfree', unit => 'bytes' },
+    { key => 'sms_nbytes', unit => 'bytes' },
+    { key => 'sms_nobj' },
+    { key => 'sms_nreq' },
+);
+
+#------------------------------------------------------------------------------
+
+my @COUNTERS = (
+    'sess_conn',              'sess_drop',
+    'sess_fail',              'client_req_400',
+    'client_req_417',         'client_req',
+    'cache_hit',              'cache_hitpass',
+    'cache_miss',             'backend_conn',
+    'backend_unhealthy',      'backend_busy',
+    'backend_fail',           'backend_reuse',
+    'backend_recycle',        'backend_retry',
+    'fetch_head',             'fetch_length',
+    'fetch_chunked',          'fetch_eof',
+    'fetch_bad',              'fetch_none',
+    'fetch_1xx',              'fetch_204',
+    'fetch_304',              'fetch_failed',
+    'fetch_no_thread',        'threads_limited',
+    'threads_created',        'threads_destroyed',
+    'threads_failed',         'busy_sleep',
+    'busy_wakeup',            'busy_killed',
+    'sess_queued',            'sess_dropped',
+    'losthdr',                's_sess',
+    's_req',                  's_pipe',
+    's_pass',                 's_fetch',
+    's_synth',                's_req_hdrbytes',
+    's_req_bodybytes',        's_resp_hdrbytes',
+    's_resp_bodybytes',       's_pipe_hdrbytes',
+    's_pipe_in',              's_pipe_out',
+    'sess_closed',            'sess_closed_err',
+    'sess_readahead',         'sess_herd',
+    'shm_records',            'shm_writes',
+    'shm_flushes',            'shm_cont',
+    'shm_cycles',             'backend_req',
+    'n_vcl',                  'n_vcl_avail',
+    'n_vcl_discard',          'bans_added',
+    'bans_deleted',           'bans_tested',
+    'bans_obj_killed',        'bans_lurker_tested',
+    'bans_tests_tested',      'bans_lurker_tests_tested',
+    'bans_lurker_obj_killed', 'bans_dups',
+    'bans_lurker_contention', 'exp_mailed',
+    'exp_received',           'hcb_nolock',
+    'hcb_lock',               'hcb_insert',
+    'esi_errors',             'esi_warnings',
+    'n_gzip',                 'n_gunzip',
+    'vsm_overflowed',         'backend_toolate',
+    'client_req_411',         'client_req_413',
+    'fetch_close',            'fetch_oldhttp',
+    'fetch_zero',             'sess_pipe_overflow',
+);
+
+#------------------------------------------------------------------------------
+
+my $plugin = Bloonix::Plugin->new( version => "0.1" );
+
+$plugin->example(
+    description => "Check Varnish4 cache",
+    arguments   => [
+        warning => "cache_hit_ratio:lt:95",
+        warning => "cache_hitpass_ratio:lt:95"
+    ]
+);
+$plugin->has_threshold( keys => \@THRESHOLDS );
+$plugin->has_timeout( default => 10 );
+
+my $opt = $plugin->parse_options;
+
+my $varnishstat = qx{which varnishstat};
+chomp $varnishstat;
+
+if ( !$varnishstat ) {
+    $plugin->exit(
+        status  => "UNKNOWN",
+        message => "no varnishstat command found"
+    );
+}
+
+my $stat = {};
+my $ipc  = $plugin->execute(
+    command     => "$varnishstat -1",
+    timeout     => $opt->{timeout},
+    kill_signal => 9
+);
+
+#------------------------------------------------------------------------------
+
+my ( %BACKEND_NUMBER, $BACKENDS, $statkey );
+
+#------------------------------------------------------------------------------
+
+foreach my $line ( @{ $ipc->stdout } ) {
+
+    if ( $line =~ /^([^\s]+)\s+([^\s]+)\s+/ ) {
+
+        my ( $name, $value ) = ( $1, $2 );
+
+        if ( $name =~ /^VBE\.((?:(?!\)\.).)+)\)\.(.*)/ ) {
+
+            my $key           = $2;
+            my $backend       = $1;
+            my $backend_count = $BACKEND_NUMBER{$backend};
+
+            unless ($backend_count) {
+                $backend_count = $BACKEND_NUMBER{$backend} = ++$BACKENDS;
+            }
+            $statkey = "backend${backend_count}_$key";
+
+            # The VBE happy counter is a 64-bit number that has a bit set for
+            # each probe so convert it to a number that indicates the number of
+            # probes.
+
+            if ($key eq 'happy' && $value) {
+                my $probes = 0;
+                for ( my $bit = 0; $bit < 64; $bit++ ) { 
+                    $probes++ if $value & ( 1 << $bit );
+                }   
+                $value = $probes;
+            }
+
+        } else {
+            my ($key) = $name =~ /\.([^\.]+)$/;
+            $statkey = "\L$name";
+            $statkey =~ s/^[^\.]+\.//
+                unless $name =~ '^MGT\.' && $key eq 'uptime';
+            $statkey =~ s/\./_/g;
+            $statkey = substr $statkey, 0, 24;
+        }
+
+        $stat->{$statkey} = $value;
+    }
+}
+
+#------------------------------------------------------------------------------
+
+my $total_hits_misses
+    = $stat->{cache_hit} + $stat->{cache_hitpass} + $stat->{cache_miss};
+
+if ($total_hits_misses) {
+    $stat->{cache_hit_ratio}
+        = sprintf( "%.2f", $stat->{cache_hit} / $total_hits_misses * 100 );
+    $stat->{cache_hitpass_ratio} = sprintf( "%.2f",
+        $stat->{cache_hitpass} / $total_hits_misses * 100 );
+    $stat->{cache_miss_ratio}
+        = sprintf( "%.2f", $stat->{cache_miss} / $total_hits_misses * 100 );
+} else {
+    $stat->{cache_hit_ratio} = $stat->{cache_hitpass_ratio}
+        = $stat->{cache_miss_ratio} = "0.00";
+}
+
+$plugin->delta( stat => $stat, keys => \@COUNTERS );
+
+$plugin->check_thresholds(
+    stats       => $stat,
+    upshot_keys => [
+        qw(client_conn client_req cache_hit_ratio cache_hitpass_ratio cache_miss_ratio)
+    ],
+    exit => "yes"
+);
+
+#------------------------------------------------------------------------------
+

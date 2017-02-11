@@ -1,0 +1,3972 @@
+plugin {
+    id 3000002
+    plugin Varnish4.Check
+    command check-varnish4
+    datatype statistic
+    category System,Webserver,Varnish
+    abstract Varnish4 server status
+    description Varnish4 statistics
+}
+
+statistic {
+    statkey cache_hit_ratio
+    alias Cache hit ratio
+    datatype float
+    description Cache hit ratio
+}           
+
+statistic {
+    statkey cache_hitpass_ratio
+    alias Cache hitpass ratio
+    datatype float
+    description Cache hitpass ratio
+}
+
+statistic {
+    statkey cache_miss_ratio
+    alias Cache miss ratio
+    datatype float
+    description Cache miss ratio
+}
+
+statistic {
+    statkey uptime
+    alias Child process uptime
+    datatype float
+    description How long the child process has been running.
+    stattype counter
+}
+
+statistic {
+    statkey sess_conn
+    alias Sessions accepted
+    datatype float
+    description Count of sessions successfully accepted
+    stattype counter
+}
+
+statistic {
+    statkey sess_drop
+    alias Sessions dropped
+    datatype float
+    description Count of sessions silently dropped due to lack of worker thread.
+    stattype counter
+}
+
+statistic {
+    statkey sess_fail
+    alias Session accept failures
+    datatype float
+    description Count of failures to accept TCP connection. Either the client changed its mind, or the kernel ran out of some resource like file descriptors.
+    stattype counter
+}
+
+statistic {
+    statkey client_req_400
+    alias Client requests received, subject to 400 errors
+    datatype float
+    description 400 means we couldn't make sense of the request, it was malformed in some drastic way.
+    stattype counter
+}
+
+statistic {
+    statkey client_req_417
+    alias Client requests received, subject to 417 errors
+    datatype float
+    description 417 means that something went wrong with an Expect: header.
+    stattype counter
+}
+
+statistic {
+    statkey client_req
+    alias Good client requests received
+    datatype float
+    description The count of parseable client requests seen.
+    stattype counter
+}
+
+statistic {
+    statkey cache_hit
+    alias Cache hits
+    datatype float
+    description Count of cache hits. A cache hit indicates that an object has been delivered to a client without fetching it from a backend server.
+    stattype counter
+}
+
+statistic {
+    statkey cache_hitpass
+    alias Cache hits for pass
+    datatype float
+    description Count of hits for pass A cache hit for pass indicates that Varnish is going to pass the request to the backend and this decision has been cached in it self. This counts how many times the cached decision is being used.
+    stattype counter
+}
+
+statistic {
+    statkey cache_miss
+    alias Cache misses
+    datatype float
+    description Count of misses A cache miss indicates the object was fetched from the backend before delivering it to the backend.
+    stattype counter
+}
+
+statistic {
+    statkey backend_conn
+    alias Backend conn. success
+    datatype float
+    description How many backend connections have successfully been established.
+    stattype counter
+}
+
+statistic {
+    statkey backend_unhealthy
+    alias Backend conn. not attempted
+    datatype float
+    description Backend conn. not attempted
+    stattype counter
+}
+
+statistic {
+    statkey backend_busy
+    alias Backend conn. too many
+    datatype float
+    description Backend conn. too many
+    stattype counter
+}
+
+statistic {
+    statkey backend_fail
+    alias Backend conn. failures
+    datatype float
+    description Backend conn. failures
+    stattype counter
+}
+
+statistic {
+    statkey backend_reuse
+    alias Backend conn. reuses
+    datatype float
+    description Count of backend connection reuses This counter is increased whenever we reuse a recycled connection.
+    stattype counter
+}
+
+statistic {
+    statkey backend_recycle
+    alias Backend conn. recycles
+    datatype float
+    description Count of backend connection recycles This counter is increased whenever we have a keep-alive connection that is put back into the pool of connections. It has not yet been used, but it might be, unless the backend closes it.
+    stattype counter
+}
+
+statistic {
+    statkey backend_retry
+    alias Backend conn. retry
+    datatype float
+    description Backend conn. retry
+    stattype counter
+}
+
+statistic {
+    statkey fetch_head
+    alias Fetch no body (HEAD)
+    datatype float
+    description beresp with no body because the request is HEAD.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_length
+    alias Fetch with Length
+    datatype float
+    description beresp.body with Content-Length.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_chunked
+    alias Fetch chunked
+    datatype float
+    description beresp.body with Chunked.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_eof
+    alias Fetch EOF
+    datatype float
+    description beresp.body with EOF.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_bad
+    alias Fetch bad T-E
+    datatype float
+    description beresp.body length/fetch could not be determined.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_none
+    alias Fetch no body
+    datatype float
+    description beresp.body empty
+    stattype counter
+}
+
+statistic {
+    statkey fetch_1xx
+    alias Fetch no body (1xx)
+    datatype float
+    description beresp with no body because of 1XX response.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_204
+    alias Fetch no body (204)
+    datatype float
+    description beresp with no body because of 204 response.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_304
+    alias Fetch no body (304)
+    datatype float
+    description beresp with no body because of 304 response.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_failed
+    alias Fetch failed (all causes)
+    datatype float
+    description beresp fetch failed.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_no_thread
+    alias Fetch failed (no thread)
+    datatype float
+    description beresp fetch failed, no thread available.
+    stattype counter
+}
+
+statistic {
+    statkey pools
+    alias Number of thread pools
+    datatype float
+    description Number of thread pools. See also parameter thread_pools. NB: Presently pools cannot be removed once created.
+    stattype gauge
+}
+
+statistic {
+    statkey threads
+    alias Total number of threads
+    datatype float
+    description Number of threads in all pools. See also parameters thread_pools, thread_pool_min and thread_pool_max.
+    stattype gauge
+}
+
+statistic {
+    statkey threads_limited
+    alias Threads hit max
+    datatype float
+    description Number of times more threads were needed, but limit was reached in a thread pool. See also parameter thread_pool_max.
+    stattype counter
+}
+
+statistic {
+    statkey threads_created
+    alias Threads created
+    datatype float
+    description Total number of threads created in all pools.
+    stattype counter
+}
+
+statistic {
+    statkey threads_destroyed
+    alias Threads destroyed
+    datatype float
+    description Total number of threads destroyed in all pools.
+    stattype counter
+}
+
+statistic {
+    statkey threads_failed
+    alias Thread creation failed
+    datatype float
+    description Number of times creating a thread failed. See VSL::Debug for diagnostics. See also parameter thread_fail_delay.
+    stattype counter
+}
+
+statistic {
+    statkey thread_queue_len
+    alias Length of session queue
+    datatype float
+    description Length of session queue waiting for threads. NB: Only updates once per second. See also parameter queue_max.
+    stattype gauge
+}
+
+statistic {
+    statkey busy_sleep
+    alias Number of requests sent to sleep on busy objhdr
+    datatype float
+    description Number of requests sent to sleep without a worker thread because they found a busy object.
+    stattype counter
+}
+
+statistic {
+    statkey busy_wakeup
+    alias Number of requests woken after sleep on busy objhdr
+    datatype float
+    description Number of requests taken of the busy object sleep list and and rescheduled.
+    stattype counter
+}
+
+statistic {
+    statkey busy_killed
+    alias Number of requests killed after sleep on busy objhdr
+    datatype float
+    description Number of requests killed from the busy object sleep list due to lack of resources.
+    stattype counter
+}
+
+statistic {
+    statkey sess_queued
+    alias Sessions queued for thread
+    datatype float
+    description Number of times session was queued waiting for a thread. See also parameter queue_max.
+    stattype counter
+}
+
+statistic {
+    statkey sess_dropped
+    alias Sessions dropped for thread
+    datatype float
+    description Number of times session was dropped because the queue were too long already. See also parameter queue_max.
+    stattype counter
+}
+
+statistic {
+    statkey n_object
+    alias object structs made
+    datatype float
+    description Number of object structs made
+    stattype gauge
+}
+
+statistic {
+    statkey n_vampireobject
+    alias unresurrected objects
+    datatype float
+    description Number of unresurrected objects
+    stattype gauge
+}
+
+statistic {
+    statkey n_objectcore
+    alias objectcore structs made
+    datatype float
+    description Number of objectcore structs made
+    stattype gauge
+}
+
+statistic {
+    statkey n_objecthead
+    alias objecthead structs made
+    datatype float
+    description Number of objecthead structs made
+    stattype gauge
+}
+
+statistic {
+    statkey n_backend
+    alias Number of backends
+    datatype float
+    description Number of backends known to us.
+    stattype gauge
+}
+
+statistic {
+    statkey n_expired
+    alias Number of expired objects
+    datatype float
+    description Number of objects that expired from cache because of old age.
+    stattype gauge
+}
+
+statistic {
+    statkey n_lru_nuked
+    alias Number of LRU nuked objects
+    datatype float
+    description How many objects have been forcefully evicted from storage to make room for a new object.
+    stattype gauge
+}
+
+statistic {
+    statkey n_lru_moved
+    alias Number of LRU moved objects
+    datatype float
+    description Number of move operations done on the LRU list.
+    stattype gauge
+}
+
+statistic {
+    statkey losthdr
+    alias HTTP header overflows
+    datatype float
+    description HTTP header overflows
+    stattype counter
+}
+
+statistic {
+    statkey s_sess
+    alias Total sessions seen
+    datatype float
+    description Total sessions seen
+    stattype counter
+}
+
+statistic {
+    statkey s_req
+    alias Total requests seen
+    datatype float
+    description Total requests seen
+    stattype counter
+}
+
+statistic {
+    statkey s_pipe
+    alias Total pipe sessions seen
+    datatype float
+    description Total pipe sessions seen
+    stattype counter
+}
+
+statistic {
+    statkey s_pass
+    alias Total pass-ed requests seen
+    datatype float
+    description Total pass-ed requests seen
+    stattype counter
+}
+
+statistic {
+    statkey s_fetch
+    alias Total backend fetches initiated
+    datatype float
+    description Total backend fetches initiated
+    stattype counter
+}
+
+statistic {
+    statkey s_synth
+    alias Total synthethic responses made
+    datatype float
+    description Total synthethic responses made
+    stattype counter
+}
+
+statistic {
+    statkey s_req_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total request header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_req_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total request body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_resp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total response header bytes transmitted
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_resp_bodybytes
+    alias Response body bytes
+    datatype float
+    description Total response body bytes transmitted
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes received for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_pipe_in
+    alias Piped bytes from client
+    datatype float
+    description Total number of bytes forwarded from clients in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s_pipe_out
+    alias Piped bytes to client
+    datatype float
+    description Total number of bytes forwarded to clients in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey sess_closed
+    alias Session Closed
+    datatype float
+    description Session Closed
+    stattype counter
+}
+
+statistic {
+    statkey sess_closed_err
+    alias Session Closed with error
+    datatype float
+    description Total number of sessions closed with errors. See sc_* diag counters for detailed breakdown
+    stattype counter
+}
+
+statistic {
+    statkey sess_readahead
+    alias Session Read Ahead
+    datatype float
+    description Session Read Ahead
+    stattype counter
+}
+
+statistic {
+    statkey sess_herd
+    alias Session herd
+    datatype float
+    description Session herd
+    stattype counter
+}
+
+statistic {
+    statkey shm_records
+    alias SHM records
+    datatype float
+    description SHM records
+    stattype counter
+}
+
+statistic {
+    statkey shm_writes
+    alias SHM writes
+    datatype float
+    description SHM writes
+    stattype counter
+}
+
+statistic {
+    statkey shm_flushes
+    alias SHM flushes due to overflow
+    datatype float
+    description SHM flushes due to overflow
+    stattype counter
+}
+
+statistic {
+    statkey shm_cont
+    alias SHM MTX contention
+    datatype float
+    description SHM MTX contention
+    stattype counter
+}
+
+statistic {
+    statkey shm_cycles
+    alias SHM cycles through buffer
+    datatype float
+    description SHM cycles through buffer
+    stattype counter
+}
+
+statistic {
+    statkey backend_req
+    alias Backend requests made
+    datatype float
+    description Backend requests made
+    stattype counter
+}
+
+statistic {
+    statkey n_vcl
+    alias Number of loaded VCLs in total
+    datatype float
+    description Number of loaded VCLs in total
+    stattype counter
+}
+
+statistic {
+    statkey n_vcl_avail
+    alias Number of VCLs available
+    datatype float
+    description Number of VCLs available
+    stattype counter
+}
+
+statistic {
+    statkey n_vcl_discard
+    alias Number of discarded VCLs
+    datatype float
+    description Number of discarded VCLs
+    stattype counter
+}
+
+statistic {
+    statkey bans
+    alias Count of bans
+    datatype float
+    description Number of all bans in system, including bans superseded by newer bans and bans already checked by the ban-lurker.
+    stattype gauge
+}
+
+statistic {
+    statkey bans_completed
+    alias Number of bans marked 'completed'
+    datatype float
+    description Number of bans which are no longer active, either because they got checked by the ban-lurker or superseded by newer identical bans.
+    stattype gauge
+}
+
+statistic {
+    statkey bans_obj
+    alias Number of bans using obj.*
+    datatype float
+    description Number of bans which use obj.* variables. These bans can possibly be washed by the ban-lurker.
+    stattype gauge
+}
+
+statistic {
+    statkey bans_req
+    alias Number of bans using req.*
+    datatype float
+    description Number of bans which use req.* variables. These bans can not be washed by the ban-lurker.
+    stattype gauge
+}
+
+statistic {
+    statkey bans_added
+    alias Bans added
+    datatype float
+    description Counter of bans added to ban list.
+    stattype counter
+}
+
+statistic {
+    statkey bans_deleted
+    alias Bans deleted
+    datatype float
+    description Counter of bans deleted from ban list.
+    stattype counter
+}
+
+statistic {
+    statkey bans_tested
+    alias Bans tested against objects (lookup)
+    datatype float
+    description Count of how many bans and objects have been tested against each other during hash lookup.
+    stattype counter
+}
+
+statistic {
+    statkey bans_obj_killed
+    alias Objects killed by bans (lookup)
+    datatype float
+    description Number of objects killed by bans during object lookup.
+    stattype counter
+}
+
+statistic {
+    statkey bans_lurker_tested
+    alias Bans tested against objects (lurker)
+    datatype float
+    description Count of how many bans and objects have been tested against each other by the ban-lurker.
+    stattype counter
+}
+
+statistic {
+    statkey bans_tests_tested
+    alias Ban tests tested against objects (lookup)
+    datatype float
+    description Count of how many tests and objects have been tested against each other during lookup. 'ban req.url == foo && req.http.host == bar' counts as one in 'bans_tested' and as two in 'bans_tests_tested'
+    stattype counter
+}
+
+statistic {
+    statkey bans_lurker_tests_tested
+    alias Ban tests tested against objects (lurker)
+    datatype float
+    description Count of how many tests and objects have been tested against each other by the ban-lurker. 'ban req.url == foo && req.http.host == bar' counts as one in 'bans_tested' and as two in 'bans_tests_tested'
+    stattype counter
+}
+
+statistic {
+    statkey bans_lurker_obj_killed
+    alias Objects killed by bans (lurker)
+    datatype float
+    description Number of objects killed by ban-lurker.
+    stattype counter
+}
+
+statistic {
+    statkey bans_dups
+    alias Bans superseded by other bans
+    datatype float
+    description Count of bans replaced by later identical bans.
+    stattype counter
+}
+
+statistic {
+    statkey bans_lurker_contention
+    alias Lurker gave way for lookup
+    datatype float
+    description Number of times the ban-lurker had to wait for lookups.
+    stattype counter
+}
+
+statistic {
+    statkey bans_persisted_bytes
+    alias Bytes used by the persisted ban lists
+    datatype float
+    description Number of bytes used by the persisted ban lists.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey bans_persisted_fragmenta
+    alias Extra bytes in persisted ban lists due to fragmentation
+    datatype float
+    description Number of extra bytes accumulated through dropped and completed bans in the persistent ban lists.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey n_purges
+    alias Number of purge operations executed
+    datatype float
+    description Number of purge operations executed
+    stattype gauge
+}
+
+statistic {
+    statkey n_obj_purged
+    alias Number of purged objects
+    datatype float
+    description Number of purged objects
+    stattype gauge
+}
+
+statistic {
+    statkey exp_mailed
+    alias Number of objects mailed to expiry thread
+    datatype float
+    description Number of objects mailed to expiry thread for handling.
+    stattype counter
+}
+
+statistic {
+    statkey exp_received
+    alias Number of objects received by expiry thread
+    datatype float
+    description Number of objects received by expiry thread for handling.
+    stattype counter
+}
+
+statistic {
+    statkey hcb_nolock
+    alias HCB Lookups without lock
+    datatype float
+    description HCB Lookups without lock
+    stattype counter
+}
+
+statistic {
+    statkey hcb_lock
+    alias HCB Lookups with lock
+    datatype float
+    description HCB Lookups with lock
+    stattype counter
+}
+
+statistic {
+    statkey hcb_insert
+    alias HCB Inserts
+    datatype float
+    description HCB Inserts
+    stattype counter
+}
+
+statistic {
+    statkey esi_errors
+    alias ESI parse errors (unlock)
+    datatype float
+    description ESI parse errors (unlock)
+    stattype counter
+}
+
+statistic {
+    statkey esi_warnings
+    alias ESI parse warnings (unlock)
+    datatype float
+    description ESI parse warnings (unlock)
+    stattype counter
+}
+
+statistic {
+    statkey vmods
+    alias Loaded VMODs
+    datatype float
+    description Loaded VMODs
+    stattype gauge
+}
+
+statistic {
+    statkey n_gzip
+    alias Gzip operations
+    datatype float
+    description Gzip operations
+    stattype counter
+}
+
+statistic {
+    statkey n_gunzip
+    alias Gunzip operations
+    datatype float
+    description Gunzip operations
+    stattype counter
+}
+
+statistic {
+    statkey vsm_free
+    alias Free VSM space
+    datatype float
+    description Number of bytes free in the shared memory used to communicate with tools like varnishstat, varnishlog etc.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vsm_used
+    alias Used VSM space
+    datatype float
+    description Number of bytes used in the shared memory used to communicate with tools like varnishstat, varnishlog etc.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vsm_cooling
+    alias Cooling VSM space
+    datatype float
+    description Number of bytes which will soon (max 1 minute) be freed in the shared memory used to communicate with tools like varnishstat, varnishlog etc.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vsm_overflow
+    alias Overflow VSM space
+    datatype float
+    description Number of bytes which does not fit in the shared memory used to communicate with tools like varnishstat, varnishlog etc.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vsm_overflowed
+    alias Overflowed VSM space
+    datatype float
+    description Total number of bytes which did not fit in the shared memory used to communicate with tools like varnishstat, varnishlog etc.
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey mgt_uptime
+    alias Management process uptime
+    datatype float
+    description Uptime in seconds of the management process
+    stattype counter
+}
+
+statistic {
+    statkey child_start
+    alias Child process started
+    datatype float
+    description Number of times the child process has been started
+    stattype counter
+}
+
+statistic {
+    statkey child_exit
+    alias Child process normal exit
+    datatype float
+    description Number of times the child process has been cleanly stopped
+    stattype counter
+}
+
+statistic {
+    statkey child_stop
+    alias Child process unexpected exit
+    datatype float
+    description Number of times the child process has exited with an unexpected return code
+    stattype counter
+}
+
+statistic {
+    statkey child_died
+    alias Child process died (signal)
+    datatype float
+    description Number of times the child process has died due to signals
+    stattype counter
+}
+
+statistic {
+    statkey child_dump
+    alias Child process core dumped
+    datatype float
+    description Number of times the child process has produced core dumps
+    stattype counter
+}
+
+statistic {
+    statkey child_panic
+    alias Child process panic
+    datatype float
+    description Number of times the management process has caught a child panic
+    stattype counter
+}
+
+statistic {
+    statkey backend_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey ban_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey cli_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey exp_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey hcb_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey hcl_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey herder_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey hsl_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey lru_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey mempool_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey nbusyobj_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey objhdr_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey pipestat_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey sess_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey sessmem_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey sma_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey smf_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey smp_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey sms_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey vbp_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey vcapace_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey vcl_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey vxid_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey wq_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey wstat_creat
+    alias Created locks
+    datatype float
+    description Created locks
+    stattype counter
+}
+
+statistic {
+    statkey backend_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey ban_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey cli_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey exp_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey hcb_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey hcl_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey herder_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey hsl_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey lru_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey mempool_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey nbusyobj_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey objhdr_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey pipestat_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey sess_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey sessmem_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey sma_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey smf_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey smp_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey sms_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey vbp_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey vcapace_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey vcl_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey vxid_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey wq_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey wstat_destroy
+    alias Destroyed locks
+    datatype float
+    description Destroyed locks
+    stattype counter
+}
+
+statistic {
+    statkey backend_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey ban_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey cli_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey exp_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey hcb_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey hcl_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey herder_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey hsl_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey lru_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey mempool_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey nbusyobj_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey objhdr_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey pipestat_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey sess_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey sessmem_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey sma_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey smf_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey smp_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey sms_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey vbp_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey vcapace_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey vcl_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey vxid_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey wq_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey wstat_locks
+    alias Lock Operations
+    datatype float
+    description Lock Operations
+    stattype counter
+}
+
+statistic {
+    statkey transient_c_req
+    alias Allocator requests
+    datatype float
+    description Number of times the storage has been asked to provide a storage segment.
+    stattype counter
+}
+
+statistic {
+    statkey s0_c_req
+    alias Allocator requests
+    datatype float
+    description Number of times the storage has been asked to provide a storage segment.
+    stattype counter
+}
+
+statistic {
+    statkey transient_c_fail
+    alias Allocator failures
+    datatype float
+    description Number of times the storage has failed to provide a storage segment.
+    stattype counter
+}
+
+statistic {
+    statkey s0_c_fail
+    alias Allocator failures
+    datatype float
+    description Number of times the storage has failed to provide a storage segment.
+    stattype counter
+}
+
+statistic {
+    statkey transient_c_bytes
+    alias Bytes allocated
+    datatype float
+    description Number of total bytes allocated by this storage.
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s0_c_bytes
+    alias Bytes allocated
+    datatype float
+    description Number of total bytes allocated by this storage.
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey transient_c_freed
+    alias Bytes freed
+    datatype float
+    description Number of total bytes returned to this storage.
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey s0_c_freed
+    alias Bytes freed
+    datatype float
+    description Number of total bytes returned to this storage.
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey transient_g_alloc
+    alias Allocations outstanding
+    datatype float
+    description Number of storage allocations outstanding.
+    stattype gauge
+}
+
+statistic {
+    statkey s0_g_alloc
+    alias Allocations outstanding
+    datatype float
+    description Number of storage allocations outstanding.
+    stattype gauge
+}
+
+statistic {
+    statkey transient_g_bytes
+    alias Bytes outstanding
+    datatype float
+    description Number of bytes allocated from the storage.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey s0_g_bytes
+    alias Bytes outstanding
+    datatype float
+    description Number of bytes allocated from the storage.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey transient_g_space
+    alias Bytes available
+    datatype float
+    description Number of bytes left in the storage.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey s0_g_space
+    alias Bytes available
+    datatype float
+    description Number of bytes left in the storage.
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey g_smf
+    alias N struct smf
+    datatype float
+    description N struct smf
+    stattype gauge
+}
+
+statistic {
+    statkey g_smf_frag
+    alias N small free smf
+    datatype float
+    description N small free smf
+    stattype gauge
+}
+
+statistic {
+    statkey g_smf_large
+    alias N large free smf
+    datatype float
+    description N large free smf
+    stattype gauge
+}
+
+statistic {
+    statkey backend1_happy
+    alias Backend 1 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend2_happy
+    alias Backend 2 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend3_happy
+    alias Backend 3 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend4_happy
+    alias Backend 4 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend5_happy
+    alias Backend 5 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend6_happy
+    alias Backend 6 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend7_happy
+    alias Backend 7 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend8_happy
+    alias Backend 8 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend9_happy
+    alias Backend 9 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend10_happy
+    alias Backend 10 Happy health probes
+    datatype float
+    description Happy health probes
+    stattype string
+}
+
+statistic {
+    statkey backend1_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_bereq_hdrbytes
+    alias Request header bytes
+    datatype float
+    description Total backend request header bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_bereq_bodybytes
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_bereq_bodybyte
+    alias Request body bytes
+    datatype float
+    description Total backend request body bytes sent
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_beresp_hdrbytes
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_beresp_hdrbyte
+    alias Response header bytes
+    datatype float
+    description Total backend response header bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_beresp_bodybyte
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_beresp_bodybyt
+    alias Response body bytes
+    datatype float
+    description Total backend response body bytes received
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_pipe_hdrbytes
+    alias Pipe request header bytes
+    datatype float
+    description Total request bytes sent for piped sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_pipe_out
+    alias Piped bytes to backend
+    datatype float
+    description Total number of bytes forwarded to backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend2_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend3_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend4_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend5_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend6_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend7_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend8_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend9_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend10_pipe_in
+    alias Piped bytes from backend
+    datatype float
+    description Total number of bytes forwarded from backend in pipe sessions
+    units bytes
+    stattype counter
+}
+
+statistic {
+    statkey backend1_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend2_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend3_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend4_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend5_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend6_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend7_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend8_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend9_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend10_conn
+    alias Concurrent connections to backend
+    datatype float
+    description Concurrent connections to backend
+    stattype gauge
+}
+
+statistic {
+    statkey backend1_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend2_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend3_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend4_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend5_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend6_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend7_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend8_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend9_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey backend10_req
+    alias Backend requests sent
+    datatype float
+    description Backend requests sent
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey vbc_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey req0_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey req1_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey sess0_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey sess1_live
+    alias In use
+    datatype float
+    description In use
+    stattype gauge
+}
+
+statistic {
+    statkey busyobj_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey vbc_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey req0_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey req1_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey sess0_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey sess1_pool
+    alias In Pool
+    datatype float
+    description In Pool
+    stattype gauge
+}
+
+statistic {
+    statkey busyobj_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vbc_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req0_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req1_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess0_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess1_sz_wanted
+    alias Size requested
+    datatype float
+    description Size requested
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey busyobj_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vbc_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req0_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req1_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess0_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess1_sz_actual
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey busyobj_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey vbc_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey req0_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey req1_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey sess0_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey sess1_allocs
+    alias Allocations
+    datatype float
+    description Allocations
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey vbc_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey req0_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey req1_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey sess0_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey sess1_frees
+    alias Frees
+    datatype float
+    description Frees
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey vbc_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey req0_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey req1_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey sess0_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey sess1_recycle
+    alias Recycled from pool
+    datatype float
+    description Recycled from pool
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey vbc_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey req0_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey req1_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey sess0_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey sess1_timeout
+    alias Timed out from pool
+    datatype float
+    description Timed out from pool
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey vbc_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey req0_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey req1_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey sess0_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey sess1_toosmall
+    alias Too small to recycle
+    datatype float
+    description Too small to recycle
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey vbc_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey req0_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey req1_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey sess0_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey sess1_surplus
+    alias Too many for pool
+    datatype float
+    description Too many for pool
+    stattype counter
+}
+
+statistic {
+    statkey busyobj_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey vbc_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey req0_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey req1_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey sess0_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey sess1_randry
+    alias Pool ran dry
+    datatype float
+    description Pool ran dry
+    stattype counter
+}
+
+statistic {
+    statkey backend_toolate
+    alias Backend conn. was closed
+    datatype float
+    description Backend conn. was closed
+    stattype counter
+}
+
+statistic {
+    statkey client_req_411
+    alias Client requests received, subject to 411 errors
+    datatype float
+    description 411 means the client did not send a Content-Lenght for the req.body.
+    stattype counter
+}
+
+statistic {
+    statkey client_req_413
+    alias Client requests received, subject to 413 errors
+    datatype float
+    description 413 means that HTTP headers execeeded length or count limits.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_close
+    alias Fetch wanted close
+    datatype float
+    description beresp with EOF due to Connection: Close.
+    stattype counter
+}
+
+statistic {
+    statkey fetch_oldhttp
+    alias Fetch pre HTTP/1.1 closed
+    datatype float
+    description beresp with EOF due to HTTP &lt; 1.1
+    stattype counter
+}
+
+statistic {
+    statkey fetch_zero
+    alias Fetch zero len body
+    datatype float
+    description beresp with EOF due to keep-live but neither Chunked or Len.
+    stattype counter
+}
+
+statistic {
+    statkey n_waitinglist
+    alias N struct waitinglist
+    datatype float
+    description N struct waitinglist
+    stattype gauge
+}
+
+statistic {
+    statkey sess_pipe_overflow
+    alias Session pipe overflow
+    datatype float
+    description Count of sessions dropped due to the session pipe overflowing.
+    stattype counter
+}
+
+statistic {
+    statkey sess_pipeline
+    alias Session Pipeline
+    datatype float
+    description Session Pipeline
+    stattype gauge
+}
+
+statistic {
+    statkey sms_balloc
+    alias SMS bytes allocated
+    datatype float
+    description SMS bytes allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sms_bfree
+    alias SMS bytes freed
+    datatype float
+    description SMS bytes freed
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sms_nbytes
+    alias SMS outstanding bytes
+    datatype float
+    description SMS outstanding bytes
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sms_nobj
+    alias SMS outstanding allocations
+    datatype float
+    description SMS outstanding allocations
+    stattype gauge
+}
+
+statistic {
+    statkey sms_nreq
+    alias SMS allocator requests
+    datatype float
+    description SMS allocator requests
+    stattype gauge
+}
+
+statistic {
+    statkey backend1_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend2_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend3_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend4_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend5_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend6_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend7_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend8_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend9_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey backend10_vcls
+    alias VCL references
+    datatype float
+    description VCL references
+    stattype gauge
+}
+
+statistic {
+    statkey busyobj_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey vbc_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req0_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey req1_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess0_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+statistic {
+    statkey sess1_sz_needed
+    alias Size allocated
+    datatype float
+    description Size allocated
+    units bytes
+    stattype gauge
+}
+
+chart {
+    id 1
+    title Varnish - backend traffic
+    options {
+        ylabel traffic
+        chart-type area
+        series {
+            name backend_conn
+            color \#ffb244
+        }
+        series {
+            name backend_unhealthy
+            color \#9a72ad
+        }
+        series {
+            name backend_busy
+            color \#005467
+        }
+        series {
+            name backend_fail
+            color \#e9644a
+        }
+        series {
+            name backend_reuse
+            color \#2ba743
+        }
+        series {
+            name backend_toolate
+            color \#1c6d16
+        }
+        series {
+            name backend_recycle
+            color \#7648eb
+        }
+        series {
+            name backend_retry
+            color \#7f7fff
+        }
+        series {
+            name backend_req
+            color \#ff7a0d
+            opposite true
+        }
+    }
+}
+
+chart {
+    id 2
+    title Varnish - Backend 1 statistics
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name backend1_bereq_hdrbytes
+            color \#ffb244
+        }
+        series {
+            name backend1_bereq_bodybytes
+            color \#9a72ad
+        }
+        series {
+            name backend1_beresp_hdrbytes
+            color \#005467
+        }
+        series {
+            name backend1_beresp_bodybytes
+            color \#2ba743
+        }
+        series {
+            name backend1_pipe_hdrbytes
+            color \#7648eb
+        }
+        series {
+            name backend1_pipe_out
+            color \#7f7fff
+        }
+        series {
+            name backend1_pipe_in
+            color \#1c6d16
+        }
+        series {
+            name backend1_conn
+            color \#bf00bf
+        }
+    }
+}
+
+chart {
+    id 3
+    title Varnish - Backend 2 statistics
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name backend2_bereq_hdrbytes
+            color \#ffb244
+        }
+        series {
+            name backend2_bereq_bodybytes
+            color \#9a72ad
+        }
+        series {
+            name backend2_beresp_hdrbytes
+            color \#005467
+        }
+        series {
+            name backend2_beresp_bodybytes
+            color \#2ba743
+        }
+        series {
+            name backend2_pipe_hdrbytes
+            color \#7648eb
+        }
+        series {
+            name backend2_pipe_out
+            color \#7f7fff
+        }
+        series {
+            name backend2_pipe_in
+            color \#1c6d16
+        }
+        series {
+            name backend2_conn
+            color \#bf00bf
+        }
+    }
+}
+
+chart {
+    id 4
+    title Varnish - Backend 3 statistics
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name backend3_bereq_hdrbytes
+            color \#ffb244
+        }
+        series {
+            name backend3_bereq_bodybytes
+            color \#9a72ad
+        }
+        series {
+            name backend3_beresp_hdrbytes
+            color \#005467
+        }
+        series {
+            name backend3_beresp_bodybytes
+            color \#2ba743
+        }
+        series {
+            name backend3_pipe_hdrbytes
+            color \#7648eb
+        }
+        series {
+            name backend3_pipe_out
+            color \#7f7fff
+        }
+        series {
+            name backend3_pipe_in
+            color \#1c6d16
+        }
+        series {
+            name backend3_conn
+            color \#bf00bf
+        }
+    }
+}
+
+chart {
+    id 5
+    title Varnish - Backend 4 statistics
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name backend4_bereq_hdrbytes
+            color \#ffb244
+        }
+        series {
+            name backend4_bereq_bodybytes
+            color \#9a72ad
+        }
+        series {
+            name backend4_beresp_hdrbytes
+            color \#005467
+        }
+        series {
+            name backend4_beresp_bodybytes
+            color \#2ba743
+        }
+        series {
+            name backend4_pipe_hdrbytes
+            color \#7648eb
+        }
+        series {
+            name backend4_pipe_out
+            color \#7f7fff
+        }
+        series {
+            name backend4_pipe_in
+            color \#1c6d16
+        }
+        series {
+            name backend4_conn
+            color \#bf00bf
+        }
+    }
+}
+
+chart {
+    id 18
+    title Varnish - Happy health probes
+    options {
+        ylabel count
+        chart-type line
+        series {
+            name backend1_happy
+            color \#ffb244
+        }
+        series {
+            name backend2_happy
+            color \#9a72ad
+        }
+        series {
+            name backend3_happy
+            color \#005467
+        }
+        series {
+            name backend4_happy
+            color \#e9644a
+        }
+    }
+}
+
+chart {
+    id 6
+    title Varnish - request rate
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name sess_conn
+            color \#e9644a
+        }
+        series {
+            name client_req
+            color \#ffb244
+        }
+        series {
+            name cache_hit
+            color \#9a72ad
+        }
+        series {
+            name cache_hitpass
+            color \#005467
+        }
+        series {
+            name cache_miss
+            color \#2ba743
+        }
+        series {
+            name backend_conn
+            color \#7648eb
+        }
+        series {
+            name backend_unhealthy
+            color \#7f7fff
+        }
+    }
+}
+
+chart {
+    id 7
+    title Varnish - hit and miss ratio
+    options {
+        ylabel ratio
+        chart-type area
+        series {
+            name cache_hit_ratio
+            color \#ffb244
+        }
+        series {
+            name cache_hitpass_ratio
+            color \#ff7a0d
+        }
+        series {
+            name cache_miss_ratio
+            color \#e9644a
+        }
+    }
+}
+
+
+chart {
+    id 8
+    title Varnish - number of objects
+    options {
+        ylabel number
+        chart-type area
+        series {
+            name n_object
+            color \#ffb244
+        }
+        series {
+            name n_vampireobject 
+            color \#005467
+        }
+        series {
+            name n_objectcore
+            color \#e9644a
+        }
+        series {
+            name n_objecthead
+            color \#2ba743
+        }
+    }
+}
+
+chart {
+    id 9
+    title Varnish - transfer rates
+    options {
+        ylabel bytes/s
+        chart-type area
+        series {
+            name s_resp_hdrbytes
+            color \#ff7a0d
+        }
+        series {
+            name s_resp_bodybytes
+            color \#e9644a
+        }
+    }
+}
+
+chart {
+    id 10
+    title Varnish - thread status
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name pools
+            color \#e9644a
+        }
+        series {
+            name threads
+            color \#ffb244
+        }
+        series {
+            name threads_limited
+            color \#9a72ad
+        }
+        series {
+            name threads_created
+            color \#005467
+        }
+        series {
+            name threads_destroyed
+            color \#2ba743
+        }
+        series {
+            name threads_failed
+            color \#7648eb
+        }
+        series {
+            name thread_queue_len
+            color \#7f7fff
+        }
+    }
+}
+
+chart {
+    id 11
+    title Varnish - memory usage
+    options {
+        ylabel bytes
+        chart-type area
+        series {
+            name sms_nbytes
+            color \#ffb244
+        }
+        series {
+            name sma_s0_g_bytes
+            color \#9a72ad
+        }
+        series {
+            name sma_s0_g_space
+            color \#005467
+        }
+        series {
+            name sma_transient_g_bytes
+            color \#e9644a
+        }
+        series {
+            name sma_transient_g_space
+            color \#2ba743
+        }
+    }
+}
+
+chart {
+    id 12
+    title Varnish - misbehaviours
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name sess_pipe_overflow
+            color \#e9644a
+        }
+        series {
+            name backend_unhealthy
+            color \#ffb244
+        }
+        series {
+            name backend_busy
+            color \#9a72ad
+        }
+        series {
+            name fetch_failed
+            color \#005467
+        }
+        series {
+            name threads_failed
+            color \#2ba743
+        }
+        series {
+            name threads_limited
+            color \#7648eb
+        }
+        series {
+            name sess_drop
+            color \#7f7fff
+        }
+        series {
+            name thread_queue_len
+            color \#1c6d16
+        }
+        series {
+            name losthdr
+            color \#bf00bf
+        }
+        series {
+            name sess_pipe_overflow
+            color \#275487
+        }
+        series {
+            name backend_toolate
+            color \#666666
+        }
+        series {
+            name backend_toolate
+            color \#cc8e36
+        }
+    }
+}
+
+chart {
+    id 13
+    title Varnish - esi errors
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name esi_warnings
+            color \#ff7a0d
+        }
+        series {
+            name esi_errors
+            color \#e9644a
+        }
+    }
+}
+
+chart {
+    id 14
+    title Varnish - vcl and bans
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name n_backend
+            color \#e9644a
+        }
+        series {
+            name n_vcl
+            color \#ffb244
+        }
+        series {
+            name n_vcl_avail
+            color \#9a72ad
+        }
+        series {
+            name n_vcl_discard
+            color \#005467
+        }
+        series {
+            name bans
+            color \#e9644a
+            opposite true
+        }
+        series {
+            name bans_added
+            color \#ffb244
+            opposite true
+        }
+        series {
+            name bans_deleted
+            color \#9a72ad
+            opposite true
+        }
+        series {
+            name bans_tested
+            color \#005467
+            opposite true
+        }
+        series {
+            name bans_dups
+            color \#7648eb
+            opposite true
+        }
+    }
+}
+
+chart {
+    id 15
+    title Varnish - lru activity
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name n_lru_nuked
+            color \#ff7a0d
+        }
+        series {
+            name n_lru_moved
+            color \#e9644a
+        }
+    }
+}
+
+chart {
+    id 16
+    title Varnish - Shared memory activity
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name shm_flushes
+            color \#ffb244
+        }
+        series {
+            name shm_cont
+            color \#005467
+        }
+        series {
+            name shm_cycles
+            color \#e9644a
+        }
+    }
+}
+
+chart {
+    id 17
+    title Varnish - Shared memory writes and records
+    options {
+        ylabel count
+        chart-type area
+        series {
+            name shm_records
+            color \#ffb244
+        }
+        series {
+            name shm_writes
+            color \#005467
+        }
+    }
+}
