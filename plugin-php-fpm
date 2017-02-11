@@ -1,0 +1,161 @@
+plugin {
+    id 3000003 
+    plugin PHP-FPM.Check
+    command check-php-fpm
+    datatype statistic
+    category System,Webserver,PHP
+    netaccess yes
+    prefer localhost
+    abstract PHP-FPM status
+    description PHP-FPM statistics.
+}
+
+statistic {
+    statkey idle 
+    alias Idle processes
+    datatype bigint
+    description Number of idle processes.
+}
+
+statistic {
+    statkey active
+    alias Active processes
+    datatype bigint
+    description Number of active processes.
+}
+
+statistic {
+    statkey total
+    alias Total processes
+    datatype bigint
+    description Number of total (active and idle) processes.
+}
+
+statistic {
+    statkey max_active
+    alias Max processes
+    datatype bigint
+    description Maximum number of active processes since FPM started.
+}
+
+statistic {
+    statkey connections
+    alias Accepted connections
+    datatype bigint
+    description Number of connections accepted.
+}
+
+statistic {
+    statkey listen
+    alias Pending connections
+    datatype bigint
+    description Number of requests in the queue of pending connections.
+}
+
+statistic {
+    statkey max_listen
+    alias Max pending connections
+    datatype bigint
+    description Maximum number of requests in the queue of pending connections since FPM has started.
+}
+
+statistic {
+    statkey listen_len
+    alias Listen queue length
+    datatype bigint
+    description Size of socket queue of pending connections.
+}
+
+statistic {
+    statkey slow
+    alias Slow requests
+    datatype bigint
+    description Number of requests that exceeded your request_slowlog_timeout value.
+}
+
+statistic {
+    statkey max_children
+    alias Max children
+    datatype bigint
+    description Number of times the process limit has been reached, when the process manager tries to start more children ('dynamic' and 'ondemand' process managers)
+}
+
+statistic {
+    statkey uptime
+    alias Uptime
+    datatype bigint
+    description Seconds since FPM has started.
+}
+
+chart {
+    id 1
+    title PHP-FPM - Processes
+    options {
+        ylabel processes
+        chart-type area
+        series {
+            name idle
+            color \#005467
+        }
+        series {
+            name active
+            color \#ff6666
+        }
+    }
+}
+chart {
+    id 2
+    title PHP-FPM - Accepted Connections
+    options {
+        ylabel connections
+        chart-type line
+        series {
+            name connections
+            color \#005467
+        }
+    }
+}
+chart {
+    id 3
+    title PHP-FPM - Listen Queue
+    options {
+        ylabel queue
+        chart-type area
+        series {
+            name listen
+            color \#005467
+        }
+        series {
+            name max_listen
+            color \#ff6666
+        }
+        series {
+            name listen_len
+            color \#bf00bf
+        }
+    }
+}
+chart {
+    id 4
+    title PHP-FPM - Slow Requests
+    options {
+        ylabel requests
+        chart-type line
+        series {
+            name slow
+            color \#005467
+        }
+    }
+}
+chart {
+    id 5
+    title PHP-FPM - Uptime
+    options {
+        ylabel uptime
+        chart-type line
+        series {
+            name uptime 
+            color \#005467
+        }
+    }
+}
