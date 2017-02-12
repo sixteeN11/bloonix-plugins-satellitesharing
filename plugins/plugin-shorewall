@@ -6,8 +6,8 @@ plugin {
     category System,Security
     netaccess no
     prefer localhost
-    description Shorewall firewall monitoring.
-    abstract Shorewall firewall monitoring.
+    description Shorewall accounting check.
+    abstract Use shorewall to count bytes and packets traversing iptables chains.
 }
 
 statistic {

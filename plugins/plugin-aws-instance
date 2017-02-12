@@ -1,11 +1,11 @@
 plugin {
     id 4110007
-    plugin AWSInstance.Check
+    plugin AWS.Instance.Check
     command check-aws-instance
     datatype none
     category System
     netaccess yes
     prefer localhost
-    description Check status of AWS EC2 instances.
-    abstract Check status of AWS EC2 instances. 
+    description Check the status of an AWS EC2 instance.
+    abstract Check the status of an AWS EC2 instance.
 }

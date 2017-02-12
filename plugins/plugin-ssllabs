@@ -6,6 +6,6 @@ plugin {
     category System
     netaccess yes
     prefer localhost
-    description Scan SSL setups using ssllabs.
-    abstract Scan SSL setups using ssllabs. 
+    description Read out an ssllabs-scan results file.
+    abstract Read out the results of a ssllabs-scan run via a cronjob.
 }

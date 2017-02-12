@@ -6,7 +6,7 @@ plugin {
     category System,Webserver,PHP
     netaccess yes
     prefer localhost
-    abstract PHP-FPM status
+    abstract PHP-FPM status.
     description PHP-FPM statistics.
 }
 

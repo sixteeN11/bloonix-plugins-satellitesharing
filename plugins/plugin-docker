@@ -6,8 +6,8 @@ plugin {
     category System,Container
     netaccess yes
     prefer localhost
-    abstract Check docker instance status
-    description Check status of docker instance.
+    abstract Check docker instance status.
+    description Check the status of a docker instance.
 }
 
 statistic {

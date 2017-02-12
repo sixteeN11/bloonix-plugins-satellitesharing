@@ -6,8 +6,8 @@ plugin {
     category System
     netaccess no
     prefer localhost
-    description Directory size check.
-    abstract Directory size check.
+    description Directory size and inode count check.
+    abstract Read the size and inode count of a directory from a cronjob results file.
 }
 
 statistic {
