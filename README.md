@@ -1,2 +1,3 @@
-# bloonix-plugins
-Plugins for the Bloonix monitoring system
+# Satellitesharing's bloonix-plugins
+
+Additional plugins for the Bloonix monitoring system
