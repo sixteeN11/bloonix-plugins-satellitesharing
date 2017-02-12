@@ -1,0 +1,11 @@
+plugin {
+    id 4110006
+    plugin SaltMinions.Check
+    command check-saltmaster-minions
+    datatype none
+    category System
+    netaccess yes
+    prefer localhost
+    description Check salt master minions list matches expectation.
+    abstract Check salt master minions list matches expectation. 
+}

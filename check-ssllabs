@@ -1,0 +1,134 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use JSON;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : Bloonix plugin to check SSL setups.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'File',
+    option      => 'file',
+    description => 'File where JSON output of ssllabs result written',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'Host',
+    option      => 'host',
+    description => 'Host to check its SSL setup',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'Grade',
+    option      => 'grade',
+    description => 'Grade host should meet or beat',
+    value_type  => 'string',
+    value       => 'A+|A|A-|B+|B|B-|C+|C|C-|D+|D|D-|E+|E|E-',
+    regex       => qr/^[A-E][-+]?\z/,
+    mandatory   => 1,
+);
+
+$plugin->example(
+    description => "Warn when blunix.de's SSLLabs scan grade is worse than A",
+    arguments   => [
+        file  => '/var/cache/bloonix/ssllabs_name-of-check.json',
+        host  => 'blunix.de',
+        grade => 'A'
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Results file exists, is not empty, and its contents can be read.
+# 2. Data format matches expectations (JSON with expected attributes).
+
+local $/;
+open( my $fh, "<", $opt->{file} )
+    or $plugin->exit(
+    status  => 'UNKNOWN',
+    message => "Cannot open $opt->{file}: $!."
+    );
+
+my $output = <$fh>;
+close($fh);
+
+my $results;
+eval { $results = decode_json $output; };
+if ($@) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Invalid file format '$opt->{file}'.  Is not JSON."
+    );
+}
+
+my ( $grade, $gradeTrustIgnored );
+
+for my $row (@$results) {
+    next unless $row->{host} eq $opt->{host};
+
+    $grade             = $row->{endpoints}->[0]->{grade};
+    $gradeTrustIgnored = $row->{endpoints}->[0]->{gradeTrustIgnored};
+    last;
+}
+
+if ($grade) {
+
+    my $pass = 0;    # Assume failure by default.
+    my ( $min_letter_grade, $min_qualifier ) = $opt->{grade} =~ /^(.)(.?)/;
+    my ( $letter,           $qualifier )     = $grade =~ /^(.)(.?)/;
+
+    if ( $letter lt $min_letter_grade ) {
+        $pass = 1;    # 'A' is less than 'B' but is a better grade.
+    } elsif ( $letter eq $min_letter_grade ) {
+        if ($min_qualifier) {
+            if ( $min_qualifier eq '-' ) {
+                $pass = 1;    # Can't get a worse grade for a given letter.
+            } else {
+                $pass = 1 if $qualifier && $qualifier eq '+';
+            }
+        } else {
+            $pass = 1 unless $qualifier && $qualifier eq '-';
+        }
+    }
+
+    if ($pass) {
+        $plugin->exit(
+            status => 'OK',
+            message =>
+                "SSL grade=$grade, gradeTrustIgnored=$gradeTrustIgnored"
+        );
+    } else {
+        $plugin->exit(
+            status => 'WARNING',
+            message =>
+                "SSL grade=$grade is worse than minimum grade=$opt->{grade}"
+        );
+    }
+
+}
+
+$plugin->exit(
+    status  => 'UNKNOWN',
+    message => " SSL results for '$opt->{host}' not found in results file . "
+);
+
+#------------------------------------------------------------------------------

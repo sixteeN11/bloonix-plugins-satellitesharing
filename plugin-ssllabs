@@ -1,0 +1,11 @@
+plugin {
+    id 4110003
+    plugin SSLLabs.Check
+    command check-ssllabs
+    datatype none
+    category System
+    netaccess yes
+    prefer localhost
+    description Scan SSL setups using ssllabs.
+    abstract Scan SSL setups using ssllabs. 
+}

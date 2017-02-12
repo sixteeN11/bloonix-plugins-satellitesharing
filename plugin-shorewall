@@ -1,0 +1,53 @@
+plugin {
+    id 4110002
+    plugin Shorewall.Check
+    command check-shorewall
+    datatype statistic
+    category System,Security
+    netaccess no
+    prefer localhost
+    description Shorewall firewall monitoring.
+    abstract Shorewall firewall monitoring.
+}
+
+statistic {
+    statkey bytes
+    stattype counter
+    alias Total number of bytes traversing the chain.
+    datatype bigint
+    description Total number of bytes traversing the chain.
+}
+
+statistic {
+    statkey pkts
+    stattype counter
+    alias Total number of packets traversing the chain.
+    datatype bigint
+    description Total number of packets traversing the chain.
+}
+
+chart {
+    id 1
+    title Shorewall - Bytes traversing chain
+    options {
+        ylabel bytes
+        units bytes
+        chart-type area
+        series {
+            name bytes
+            color \#005467
+        }
+    }
+}
+chart {
+    id 2
+    title Shorewall - Packets traversing chain
+    options {
+        ylabel packets
+        chart-type area
+        series {
+            name pkts
+            color \#005467
+        }
+    }
+}

@@ -1,0 +1,178 @@
+plugin {
+    id 4110001
+    plugin uWSGI.Check
+    command check-uwsgi
+    datatype statistic
+    category System,Webserver,uWSGI
+    netaccess yes
+    prefer localhost
+    abstract uWSGI status
+    description uWSGI statistics.
+}
+
+statistic {
+    statkey requests
+    stattype counter
+    alias Number of requests handled
+    datatype bigint
+    description Number of requests handled.
+}
+
+statistic {
+    statkey exceptions
+    stattype counter
+    alias Exceptions
+    datatype bigint
+    description Number of exceptions generated.
+}
+
+statistic {
+    statkey rss
+    stattype gauge
+    alias Resident Set Size
+    datatype bigint
+    description Memory allocated to uWSGI and in RAM
+}
+
+statistic {
+    statkey vsz
+    stattype gauge
+    alias Virtual Memory Size
+    datatype bigint
+    description Memory uWSGI can access, including memory that is swapped out and memory that is from shared libraries.
+}
+
+statistic {
+    statkey tx
+    stattype counter
+    alias Bytes sent
+    datatype bigint
+    description Data transmitted.
+}
+
+statistic {
+    statkey avg_rt
+    stattype gauge
+    alias Average response time
+    datatype bigint
+    description Average response time of requests.
+}
+
+statistic {
+    statkey listen_queue
+    stattype gauge
+    alias Pending connections
+    datatype bigint
+    description Requests in the queue of pending connections.
+}
+
+statistic {
+    statkey listen_queue_errors
+    stattype counter
+    alias Listen queue errors
+    datatype bigint
+    description Listen queue errors.
+}
+
+statistic {
+    statkey signal_queue
+    stattype gauge
+    alias Signal queue
+    datatype bigint
+    description Signal queue.
+}
+
+statistic {
+    statkey load
+    stattype gauge
+    alias Load
+    datatype bigint
+    description Load.
+}
+
+statistic {
+    statkey workers 
+    stattype gauge
+    alias workers
+    datatype bigint
+    description uWSGI worker processes.
+}
+
+chart {
+    id 1
+    title uWSGI - Requests
+    options {
+        ylabel requests
+        chart-type area
+        series {
+            name requests
+            color \#005467
+        }
+    }
+}
+chart {
+    id 2
+    title uWSGI - Memory Usage
+    options {
+        ylabel RAM
+        units bytes
+        chart-type area
+        series {
+            name rss
+            color \#005467
+        }
+        series {
+            name vsz
+            color \#ff7a0d
+        }
+    }
+}
+chart {
+    id 3
+    title uWSGI - Workers
+    options {
+        ylabel workers
+        chart-type line
+        series {
+            name workers
+            color \#005467
+        }
+    }
+}
+chart {
+    id 4
+    title uWSGI - Data Transmitted
+    options {
+        ylabel bytes sent
+        units bytes
+        chart-type line
+        series {
+            name tx
+            color \#005467
+        }
+    }
+}
+chart {
+    id 5
+    title uWSGI - Average Response Time
+    options {
+        ylabel response time
+        chart-type line
+        series {
+            name avg_rt
+            color \#005467
+        }
+    }
+}
+chart {
+    id 6
+    title uWSGI - Load
+    options {
+        ylabel load
+        chart-type line
+        series {
+            name load
+            color \#005467
+        }
+    }
+}

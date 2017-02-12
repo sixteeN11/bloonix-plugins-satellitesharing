@@ -1,0 +1,176 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : Bloonix plugin to check directory size.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'File',
+    option      => 'file',
+    description => 'File where cron job du command result written',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'Inodes',
+    option      => 'max-inodes',
+    description => 'Maximum number of inodes',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'Inodes',
+    option      => 'min-inodes',
+    description => 'Minimum number of inodes',
+    value_type  => 'string',
+);
+
+$plugin->add_option(
+    name        => 'Size',
+    option      => 'max-size',
+    description => 'Maximum size of directory',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'Size',
+    option      => 'min-size',
+    description => 'Minimum size of directory',
+    value_type  => 'string',
+);
+
+$plugin->example(
+    description =>
+        'Warn when directory is greater than 1MB or has more than 100 inodes',
+    arguments => [
+        file         => '/var/tmp/du-result-for-some-directory.txt',
+        'max-inodes' => 100,
+        'max-size'   => '1MB'
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. File exists, is not empty, and its contents can be read.
+# 2. Data format matches expectations (JSON with expected attributes).
+
+local $/;
+open( my $fh, "<", $opt->{file} )
+    or $plugin->exit(
+    status  => 'UNKNOWN',
+    message => "Cannot open $opt->{file}: $!."
+    );
+
+my $output = <$fh>;
+close($fh);
+my $stats;
+
+while ( $output =~ /([a-z]++)\s*+:\s*+([0-9]++)/gcm ) {
+    $stats->{$1} = $2;
+}
+
+unless ( exists $stats->{size} && exists $stats->{inodes} ) {
+    $plugin->exit(
+        status => 'UNKNOWN',
+        message =>
+            "$opt->{file} JSON must have 'size' and 'inodes' attributes."
+    );
+}
+
+# Both attributes must have integer values.
+unless ( $stats->{size} =~ /^[0-9]+$/ && $stats->{inodes} =~ /^[0-9]+$/ ) {
+    $plugin->exit(
+        status => 'UNKNOWN',
+        message =>
+            "$opt->{file} 'size' and 'inodes' attribute values must be integers."
+    );
+}
+
+my $max_inodes = bytes( $opt->{max_inodes} );
+my $max_size   = bytes( $opt->{max_size} );
+my $min_inodes = bytes( $opt->{min_inodes} );
+my $min_size   = bytes( $opt->{min_size} );
+
+my $status  = 'OK';
+my $message = '';
+
+if ( $stats->{inodes} > $max_inodes ) {
+    $status = 'WARNING';
+    $message
+        = "Directory inodes=$stats->{inodes} is greater than maximum=$max_inodes. ";
+}
+
+if ( $stats->{size} > $max_size ) {
+    $status = 'WARNING';
+    $message
+        .= "Directory size=$stats->{size} bytes is greater than maximum=$max_size.";
+}
+
+if ( $min_inodes && $stats->{inodes} < $min_inodes ) {
+    $status = 'WARNING';
+    $message
+        = "Directory inodes=$stats->{inodes} is less than minimum=$min_inodes. ";
+}
+
+if ( $min_size && $stats->{size} < $min_size ) {
+    $status = 'WARNING';
+    $message
+        = "Directory size=$stats->{size} is less than minimum=$min_size. ";
+}
+
+$message = "Directory size=$stats->{size}, inodes=$stats->{inodes}"
+    unless $message;
+
+$plugin->exit(
+    status  => $status,
+    message => $message,
+    stats   => $stats
+);
+
+#------------------------------------------------------------------------------
+
+use constant {
+    KILOBYTE => 1024,
+    MEGABYTE => 1048576,
+    GIGABYTE => 1073741824,
+    TERABYTE => 1099511627776,
+    PETATYPE => 1125899906842624,
+    EXABYTE  => 1152921504606846976
+};
+
+sub bytes {
+    my $number = shift;
+    if ( $number =~ /^([0-9]+)([a-zA-Z])[a-zA-Z]*$/ ) {
+        if ( "\U$2" eq 'K' ) {
+            $number = $1 * KILOBYTE;
+        } elsif ( "\U$2" eq 'M' ) {
+            $number = $1 * MEGABYTE;
+        } elsif ( "\U$2" eq 'G' ) {
+            $number = $1 * GIGABYTE;
+        } elsif ( "\U$2" eq 'T' ) {
+            $number = $1 * TERABYTE;
+        }
+    }
+    return $number;
+}
+
+#------------------------------------------------------------------------------

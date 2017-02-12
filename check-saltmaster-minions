@@ -1,0 +1,219 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use JSON;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : Bloonix plugin to check status of salt master minions.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'Minions accepted',
+    option      => 'minions',
+    description => 'Accepted minions',
+    value_type  => 'string',
+    multiple    => 1,
+);
+
+$plugin->add_option(
+    name        => 'Rejected minions',
+    option      => 'minions-rejected',
+    description => 'Minions rejected',
+    value_type  => 'string',
+    multiple    => 1,
+);
+
+$plugin->add_option(
+    name        => 'Denied minions',
+    option      => 'minions-denied',
+    description => 'Minions denied',
+    value_type  => 'string',
+    multiple    => 1,
+);
+
+$plugin->add_option(
+    name        => 'Pre minions',
+    option      => 'minions-pre',
+    description => 'Minions pre',
+    value_type  => 'string',
+    multiple    => 1,
+);
+
+$plugin->example(
+    description => 'Verify that foobar.com and squash.io are accepted minions'
+        . 'region is running and alert otherwise.',
+    arguments => [
+        minions => 'foobar.com',
+        minions => 'squash.io'
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute salt-key command.
+# 2. Can execute salt command.
+# 3. Commands ouput indicate success (salt commands' return status cannot be
+#    relied upon to determine success or failure of command).
+#
+# my $cmd1 = 'salt-key --out json';
+
+my $saltkey_cmd = `which salt-key`;
+unless ( chomp($saltkey_cmd) ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Cannot find salt-key command.'
+    );
+}
+
+my $salt_cmd = `which salt`;
+unless ( chomp($salt_cmd) ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Cannot find salt command.'
+    );
+}
+
+my $output;
+eval { chomp( $output = `salt-key --out json` ); };
+
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'aws command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+# Minion categories: rejected, denied, pre, accepted.
+# There could be:
+# a) Entries passed that are missing from server's minions list.
+# b) Entries in server's minions list that were not passed.
+
+my ( %check_accepted, %check_rejected, %check_denied, %check_pre,
+    %accepted, %rejected, %denied, %pre );
+
+$check_accepted{$_} = 1 foreach @{ $opt->{minions} };
+$check_rejected{$_} = 1 foreach @{ $opt->{minions_rejected} };
+$check_denied{$_}   = 1 foreach @{ $opt->{minions_denied} };
+$check_pre{$_}      = 1 foreach @{ $opt->{minions_pre} };
+
+my $minions = decode_json $output;
+
+$accepted{$_} = 1 foreach @{ $minions->{minions} };
+$rejected{$_} = 1 foreach @{ $minions->{minions_rejected} };
+$denied{$_}   = 1 foreach @{ $minions->{minions_denied} };
+$pre{$_}      = 1 foreach @{ $minions->{minions_pre} };
+
+my ( @not_passed, @not_master, @hosts );
+
+# @not_passed # - present at server but not passed.
+# @not_master # - passed but not present in master's list.
+
+foreach my $host ( keys %check_accepted ) {
+    push @hosts, $host;
+    if ( $accepted{$host} ) {
+        delete $check_accepted{$host};
+        delete $accepted{$host};
+    } else {
+        push @not_master, $host;
+    }
+}
+
+foreach my $host ( keys %check_rejected ) {
+    push @hosts, $host;
+    if ( $rejected{$host} ) {
+        delete $check_rejected{$host};
+        delete $rejected{$host};
+    } else {
+        push @not_master, $host;
+    }
+}
+
+foreach my $host ( keys %check_denied ) {
+    push @hosts, $host;
+    if ( $denied{$host} ) {
+        delete $check_denied{$host};
+        delete $denied{$host};
+    } else {
+        push @not_master, $host;
+    }
+}
+
+foreach my $host ( keys %check_pre ) {
+    push @hosts, $host;
+    if ( $pre{$host} ) {
+        delete $check_pre{$host};
+        delete $pre{$host};
+    } else {
+        push @not_master, $host;
+    }
+}
+
+# @not_master has the list of hosts that were passed but were not found
+# in the specified list on the master.
+# Anything remaining in %accepted, %rejected, %denied, %pre are present on
+# the master but were not passed. We do not warn for those.
+
+my $status  = 'OK';
+my $message = '';
+
+if (@not_master) {
+    $status  = 'WARNING';
+    $message = 'Hosts not in appropriate minions lists: '
+        . ( join ', ', @not_master ) . '. ';
+}
+
+# Now see what doesn't respond to ping.
+unless (@hosts) {
+    $plugin->exit(
+        status  => $status,
+        message => $message
+    );
+}
+
+my $cmd
+    = "salt --timeout 5 --out json -E '"
+    . ( join '|', @hosts )
+    . "' test.ping";
+$output = `$cmd`;
+
+my ( @noping, $response, $host );
+while ( $output =~ /{\s*+"([^"]+)"\s*+:\s*+([^}]+)\s*+}/gcm ) {
+    $host     = $1;
+    $response = $2;
+    $response =~ s/\s*$//m;
+    push @noping, $host if $response ne 'true';
+}
+
+if (@noping) {
+    $status = 'WARNING';
+    $message
+        .= 'Hosts not responding to ping: ' . ( join ', ', @noping ) . '.';
+}
+
+$plugin->exit(
+    status  => $status,
+    message => $message
+);
+
+#------------------------------------------------------------------------------

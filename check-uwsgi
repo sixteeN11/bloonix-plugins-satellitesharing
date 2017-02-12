@@ -1,0 +1,170 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use JSON;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : uWSGI Bloonix plugin to get and display uWSGI stats.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'uWSGI Stats Server',
+    option      => 'server',
+    description => 'unix domain socket or IP:PORT of uWSGI Stats Server',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->has_threshold(
+    keys => [
+        { key => 'avg_rt' },
+        { key => 'rss', unit => 'bytes' },
+        { key => 'vsz', unit => 'bytes' }
+    ]
+);
+
+$plugin->example(
+    description =>
+        "Get uWSGI stats from Stats Server listening on UNIX domain socket"
+        . ". Warn when 50MB RAM or more used by the uWSGI server",
+    arguments => [
+        server  => '/tmp/statsock',
+        warning => 'rss;ge;52428800',
+    ]
+);
+
+$plugin->example(
+    description =>
+        "Get uWSGI stats from Stats Server listening on IP address and port"
+        . ". Warn when 50MB RAM or more used by the uWSGI server",
+    arguments => [
+        server  => '127.0.0.1:1717',
+        warning => 'rss;ge;52428800',
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute uwsgi command.
+# 2. Can connect to uWSGI Stats Server.
+# 3. uwsgi command execution successful.
+
+my $exe = `which uwsgi`;
+unless ( chomp($exe) ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Cannot find uwsgi command.'
+    );
+}
+
+my $cmd = "$exe --connect-and-read $opt->{server} 2>&1";
+my $output;
+eval { chomp( $output = `$cmd` ); };
+
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'uwsgi command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+if ( $? >> 8 ) {
+
+    #   if ( $output =~ /No such file or directory/ ) {
+    if ( $output =~ /uwsgi_connect\(\)/ ) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Failed to connect to '$opt->{server}'."
+                . " Is the uWSGI Stats Server running?"
+        );
+    }
+
+    # With port with non-existent server listening get:
+    # uwsgi_connect(): Operation now in progress [core/uwsgi.c line 4773]
+
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'uwsgi command failed with exit value ' . ( $? >> 8 )
+    );
+}
+
+#------------------------------------------------------------------------------
+
+###########     uwsgi command successfully executed, parse stats.  ############
+
+my $stats = statistics($output);
+
+$plugin->delta(
+    stat => $stats,
+    keys => [qw(requests exceptions listen_queue_errors tx)]
+);
+
+$plugin->check_thresholds(
+    stats       => $stats,
+    upshot_keys => [qw(avg_rt rss vsz)],
+    exit        => "yes"
+);
+
+#------------------------------------------------------------------------------
+
+sub statistics {
+
+    my $json        = shift;
+    my $uwsgi_stats = decode_json $json;
+
+    my %stats = (
+        'requests'            => 0,
+        'exceptions'          => 0,
+        'rss'                 => 0,
+        'vsz'                 => 0,
+        'tx'                  => 0,
+        'avg_rt'              => 0,
+        'listen_queue'        => 0,
+        'listen_queue_errors' => 0,
+        'signal_queue'        => 0,
+        'load'                => 0,
+    );
+
+    for my $key ( 'listen_queue', 'listen_queue_errors',
+        'signal_queue', 'load' )
+    {
+        $stats{$key} = $uwsgi_stats->{$key} || 0;
+    }
+
+    for my $worker ( @{ $uwsgi_stats->{workers} } ) {
+        $stats{'requests'}   += $worker->{'requests'};
+        $stats{'exceptions'} += $worker->{'exceptions'};
+        $stats{'rss'}        += $worker->{'rss'};
+        $stats{'vsz'}        += $worker->{'vsz'};
+        $stats{'tx'}         += $worker->{'tx'};
+        $stats{'avg_rt'}     += $worker->{'avg_rt'};
+    }
+
+    $stats{workers} = 0 + @{ $uwsgi_stats->{workers} };
+    $stats{'avg_rt'} /= $stats{workers};
+
+    return \%stats;
+}
+
+#------------------------------------------------------------------------------

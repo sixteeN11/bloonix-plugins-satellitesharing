@@ -1,0 +1,54 @@
+plugin {
+    id 4110004
+    plugin du.Check
+    command check-du
+    datatype statistic
+    category System
+    netaccess no
+    prefer localhost
+    description Directory size check.
+    abstract Directory size check.
+}
+
+statistic {
+    statkey size
+    stattype gauge
+    alias Directory size in bytes.
+    datatype bigint
+    units bytes
+    description Directory size in bytes.
+}
+
+statistic {
+    statkey inodes
+    stattype gauge
+    alias Directory inodes.
+    datatype bigint
+    description Total number of inodes in directory.
+}
+
+chart {
+    id 1
+    title Directory Size - Bytes
+    options {
+        ylabel bytes
+        units bytes
+        chart-type area
+        series {
+            name size
+            color \#005467
+        }
+    }
+}
+chart {
+    id 2
+    title Diretory Size - Inodes
+    options {
+        ylabel inodes
+        chart-type area
+        series {
+            name inodes
+            color \#005467
+        }
+    }
+}

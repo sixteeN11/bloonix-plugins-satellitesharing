@@ -1,0 +1,151 @@
+plugin {
+    id 4110005
+    plugin Docker.Check
+    command check-docker
+    datatype statistic
+    category System,Container
+    netaccess yes
+    prefer localhost
+    abstract Check docker instance status
+    description Check status of docker instance.
+}
+
+statistic {
+    statkey cpu       
+    stattype gauge
+    datatype float
+    description CPU percentage
+    alias CPU percentage
+}
+
+statistic {
+    statkey mem_usage 
+    stattype gauge
+    datatype bigint
+    description Memory usage
+    alias Memory usage
+}
+
+statistic {
+    statkey mem_limit 
+    stattype gauge
+    datatype bigint
+    description Memory limit
+    alias Memory limit
+}
+
+statistic {
+    statkey mem_pct   
+    stattype gauge
+    datatype float
+    description Memory percentage
+    alias Memory percentage
+}
+
+statistic {
+    statkey net_in    
+    stattype counter
+    datatype float
+    description Network bytes in
+    alias Network bytes in
+}
+
+statistic {
+    statkey net_out   
+    stattype counter
+    datatype float
+    description Network bytes out
+    alias Network bytes out
+}
+
+statistic {
+    statkey blk_in    
+    stattype counter
+    datatype float
+    description Block bytes in
+    alias Block bytes in
+}
+
+statistic {
+    statkey blk_out   
+    stattype counter
+    datatype float
+    description Block bytes out
+    alias Block bytes out
+}
+
+chart {
+    id 1
+    title Docker container - CPU usage
+    options {
+        ylabel cpu pct
+        chart-type area
+        series {
+            name cpu 
+            color \#005467
+        }
+    }
+}
+chart {
+    id 2
+    title Docker container - Memory Usage
+    options {
+        ylabel RAM
+        units bytes
+        chart-type area
+        series {
+            name mem_usage
+            color \#005467
+        }
+        series {
+            name mem_limit
+            color \#ff7a0d
+        }
+    }
+}
+chart {
+    id 3
+    title Docker container - Memory Percentage
+    options {
+        ylabel mem pct
+        chart-type line
+        series {
+            name mem_pct
+            color \#005467
+        }
+    }
+}
+chart {
+    id 4
+    title Docker container - Network I/O
+    options {
+        ylabel bytes 
+        units bytes
+        chart-type area
+        series {
+            name net_in
+            color \#005467
+        }
+        series {
+            name net_out
+            color \#ff7a0d
+        }
+    }
+}
+chart {
+    id 5
+    title Docker container - Block I/O
+    options {
+        ylabel bytes 
+        units bytes
+        chart-type area
+        series {
+            name blk_in
+            color \#005467
+        }
+        series {
+            name blk_out
+            color \#ff7a0d
+        }
+    }
+}

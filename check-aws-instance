@@ -1,0 +1,144 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use JSON;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : AWS Bloonix plugin to check status of an EC2 machine.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'Instance ID',
+    option      => 'instance',
+    description => 'Machine instance ID',
+    value_type  => 'string',
+    mandatory   => 1,
+);
+
+$plugin->add_option(
+    name        => 'AWS region',
+    option      => 'region',
+    description => 'AWS region where instance is located',
+    value_type  => 'string',
+    mandatory   => 1,
+    default     => 'us-east-1',
+);
+
+$plugin->add_option(
+    name        => 'Expected instance state',
+    option      => 'state',
+    description => 'Expected instance state (running or stopped)',
+    value_type  => 'string',
+    value       => 'running|stopped',
+    regex       => qr/^(running|stopped)\z/,
+    default     => 'running',
+);
+
+$plugin->example(
+    description => 'Verify that instance "i-1234567890abcdef0" in us-east-1 '
+        . 'region is running and alert otherwise.',
+    arguments => [
+        instance => 'i-1234567890abcdef0',
+        region      => 'us-east-1',
+        state       => 'running'
+    ]
+);
+
+$plugin->example(
+    description => 'Verify that instance "i-1234567890abcdef0" in us-east-1 '
+        . 'region is not running (ie stopped).',
+    arguments => [
+        instance => 'i-1234567890abcdef0',
+        region      => 'us-east-1',
+        state       => 'stopped'
+    ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute aws command.
+# 2. aws command execution successful.
+
+my $exe = `which aws`;
+unless ( chomp($exe) ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Cannot find aws command.'
+    );
+}
+
+my $cmd
+    = "$exe ec2 describe-instance-status --output json --region $opt->{region} --instance-ids $opt->{instance} 2>&1";
+my $output;
+eval { chomp( $output = `$cmd` ); };
+
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'aws command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+if ( $? >> 8 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'aws command failed with exit value ' . ( $? >> 8 )
+    );
+}
+
+#------------------------------------------------------------------------------
+
+##########     aws command successfully executed, process output.  ############
+
+use constant {
+    RUNNING => 16,
+    STOPPED => 80,
+};
+
+my $instance
+    = ( decode_json $output)->{"InstanceStatuses"}->[0];
+my $message = $instance->{"InstanceId"} . ' is '
+    . $instance->{"InstanceState"}->{"Name"} . '.';
+my ($status);
+
+if ( $opt->{state} eq 'running' ) {
+    if ( RUNNING == $instance->{"InstanceState"}->{"Code"} ) {
+        $status = 'OK';
+    } else {
+        $status = 'CRITICAL';
+    }
+} else {
+    if ( STOPPED == $instance->{"InstanceState"}->{"Code"} ) {
+        $status = 'OK';
+    } else {
+        $status = 'WARNING';
+    }
+}
+
+$plugin->exit(
+    status  => $status,
+    message => $message
+);
+
+#------------------------------------------------------------------------------

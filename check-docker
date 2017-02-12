@@ -1,0 +1,95 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use JSON;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Description : Bloonix plugin to check status of docker instance.
+# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+
+$plugin->add_option(
+    name        => 'Container Name or ID',
+    option      => 'container',
+    description => 'Container name or id',
+    value_type  => 'string',
+    mandatory   => 1
+);
+
+$plugin->example(
+    description => "Check whether the container 'f4c74eb027cf' is running",
+    arguments   => [ container => 'f4c74eb027cf' ]
+);
+
+my $opt = $plugin->parse_options;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute docker command.
+#
+
+my $exe = `which docker`;
+unless ( chomp($exe) ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Cannot find 'docker' command."
+    );
+}
+
+my $output;
+eval { chomp( $output = `docker inspect $opt->{container} | grep Status` ); };
+
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'docker command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+my ($message) = $output =~ /"Status"\s*+:\s*+"([^"]+)"/gm;
+my $status = $message eq 'running' ? 'OK' : 'CRITICAL';
+
+my @lines;
+eval { @lines = `docker stats --no-stream $opt->{container}` };
+
+my ($container, $cpu,     $mem_usage, $mem_limit, $mem_pct,
+    $net_in,    $net_out, $blk_in,    $blk_out
+) = split /(\s+\/\s+|\s+)/, $lines[1];
+
+$cpu =~ s/%//g;
+$mem_pct =~ s/%//g;
+
+$plugin->exit(
+    status  => $status,
+    message => $message,
+    stats   => {
+        cpu       => $cpu,
+        mem_usage => $mem_usage,
+        mem_limit => $mem_limit,
+        mem_pct   => $mem_pct,
+        net_in    => $net_in,
+        net_out   => $net_out,
+        blk_in    => $blk_in,
+        blk_out   => $blk_out,
+    }
+);
+
+#------------------------------------------------------------------------------
