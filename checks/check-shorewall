@@ -7,14 +7,15 @@ use Bloonix::Plugin;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Feb 2017.
 # Description : Shorewall Bloonix plugin to check rules and alert on thresholds.
-# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'Firewall chain',
@@ -94,8 +95,9 @@ my $opt = $plugin->parse_options;
 
 # Cannot rely on shorewall's exit status to determine success of command.
 
-my $exe = `which shorewall`;
-unless ( chomp($exe) ) {
+my $exe;
+chomp( $exe = `which shorewall` );
+unless ($exe) {
     $plugin->exit(
         status => 'UNKNOWN',
         message =>
@@ -105,7 +107,7 @@ unless ( chomp($exe) ) {
 
 my $cmd = "$exe show $opt->{chain} 2>&1";
 my @output;
-eval { @output = `$cmd` ; };
+eval { @output = `$cmd`; };
 
 if ( $? == -1 ) {
     $plugin->exit(
@@ -192,6 +194,8 @@ LINE: foreach my $line (@output) {
     }
 
     $line =~ s/^\s+//;
+    next unless $line;
+
     my @columns = split /\s+/, $line;
 
     for ( my $i = 0; $i < @cols; $i++ ) {
@@ -200,8 +204,8 @@ LINE: foreach my $line (@output) {
 
     # This row matches passes the user's filters.
     my $stats = {
-        bytes => bytes( $columns[BYTES] ),
-        pkts  => bytes( $columns[PACKETS] )
+        bytes => raw_number( $columns[BYTES] ),
+        pkts  => raw_number( $columns[PACKETS] )
     };
 
     $plugin->delta( stat => $stats, keys => [qw(bytes pkts)] );
@@ -217,8 +221,8 @@ LINE: foreach my $line (@output) {
 # No row matched the user's filters, return error.
 $plugin->exit(
     status  => 'UNKNOWN',
-    message => "No matching row in '$opt->{chain}' chain. ". 
-        "Have the appropriate firewall rules been defined?"
+    message => "No matching row in '$opt->{chain}' chain. "
+        . "Have the appropriate firewall rules been defined?"
 );
 
 #------------------------------------------------------------------------------
@@ -228,11 +232,11 @@ use constant {
     MEGABYTE => 1048576,
     GIGABYTE => 1073741824,
     TERABYTE => 1099511627776,
-    PETATYPE => 1125899906842624,
+    PETABYPE => 1125899906842624,
     EXABYTE  => 1152921504606846976
 };
 
-sub bytes {
+sub raw_number {
     my $number = shift;
     if ( $number =~ /^([0-9]+)([a-zA-Z])$/ ) {
         if ( "\U$2" eq 'K' ) {
@@ -243,6 +247,10 @@ sub bytes {
             $number = $1 * GIGABYTE;
         } elsif ( "\U$2" eq 'T' ) {
             $number = $1 * TERABYTE;
+        } elsif ( "\U$2" eq 'P' ) {
+            $number = $1 * PETABYPE;
+        } elsif ( "\U$2" eq 'E' ) {
+            $number = $1 * EXABYTE;
         }
     }
     return $number;
