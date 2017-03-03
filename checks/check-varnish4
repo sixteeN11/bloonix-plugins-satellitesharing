@@ -5,8 +5,14 @@
 use strict;
 use warnings;
 use Bloonix::Plugin;
-use Bloonix::IPC::Cmd;
 
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Jan 2017.
+# Description : Bloonix plugin to get/check varnish 4's stats.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+#
 #------------------------------------------------------------------------------
 
 my @THRESHOLDS = (
@@ -189,7 +195,7 @@ my @COUNTERS = (
 
 #------------------------------------------------------------------------------
 
-my $plugin = Bloonix::Plugin->new( version => "0.1" );
+my $plugin = Bloonix::Plugin->new( version => 0.2 );
 
 $plugin->example(
     description => "Check Varnish4 cache",
@@ -214,11 +220,31 @@ if ( !$varnishstat ) {
 }
 
 my $stat = {};
-my $ipc  = $plugin->execute(
-    command     => "$varnishstat -1",
-    timeout     => $opt->{timeout},
-    kill_signal => 9
-);
+my $cmd  = 'varnishstat -1 2>&1';
+my @output;
+eval { @output = `$cmd`; };
+
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'varnishstat command died with signal '
+            . ( $? & 127 ) . '.'
+    );
+}
+
+if ( $? >> 8 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => $output[0]
+    );
+}
 
 #------------------------------------------------------------------------------
 
@@ -226,7 +252,7 @@ my ( %BACKEND_NUMBER, $BACKENDS, $statkey );
 
 #------------------------------------------------------------------------------
 
-foreach my $line ( @{ $ipc->stdout } ) {
+foreach my $line (@output) {
 
     if ( $line =~ /^([^\s]+)\s+([^\s]+)\s+/ ) {
 
@@ -243,15 +269,15 @@ foreach my $line ( @{ $ipc->stdout } ) {
             }
             $statkey = "backend${backend_count}_$key";
 
-            # The VBE happy counter is a 64-bit number that has a bit set for
-            # each probe so convert it to a number that indicates the number of
-            # probes.
+           # The VBE happy counter is a 64-bit number that has a bit set for
+           # each probe so convert it to a number that indicates the number of
+           # probes.
 
-            if ($key eq 'happy' && $value) {
+            if ( $key eq 'happy' && $value ) {
                 my $probes = 0;
-                for ( my $bit = 0; $bit < 64; $bit++ ) { 
+                for ( my $bit = 0; $bit < 64; $bit++ ) {
                     $probes++ if $value & ( 1 << $bit );
-                }   
+                }
                 $value = $probes;
             }
 
