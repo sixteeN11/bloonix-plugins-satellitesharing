@@ -8,14 +8,15 @@ use JSON;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Feb 2017.
 # Description : AWS Bloonix plugin to check status of an EC2 machine.
-# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'Instance ID',
@@ -23,6 +24,7 @@ $plugin->add_option(
     description => 'Machine instance ID',
     value_type  => 'string',
     mandatory   => 1,
+    example     => 'i-1234567890abcdef0',
 );
 
 $plugin->add_option(
@@ -49,8 +51,8 @@ $plugin->example(
         . 'region is running and alert otherwise.',
     arguments => [
         instance => 'i-1234567890abcdef0',
-        region      => 'us-east-1',
-        state       => 'running'
+        region   => 'us-east-1',
+        state    => 'running'
     ]
 );
 
@@ -59,8 +61,8 @@ $plugin->example(
         . 'region is not running (ie stopped).',
     arguments => [
         instance => 'i-1234567890abcdef0',
-        region      => 'us-east-1',
-        state       => 'stopped'
+        region   => 'us-east-1',
+        state    => 'stopped'
     ]
 );
 
@@ -73,8 +75,9 @@ my $opt = $plugin->parse_options;
 # 1. Can execute aws command.
 # 2. aws command execution successful.
 
-my $exe = `which aws`;
-unless ( chomp($exe) ) {
+my $exe;
+chomp( $exe = `which aws` );
+unless ($exe) {
     $plugin->exit(
         status  => 'UNKNOWN',
         message => 'Cannot find aws command.'
@@ -103,7 +106,7 @@ if ( $? & 127 ) {
 if ( $? >> 8 ) {
     $plugin->exit(
         status  => 'UNKNOWN',
-        message => 'aws command failed with exit value ' . ( $? >> 8 )
+        message => $output
     );
 }
 
