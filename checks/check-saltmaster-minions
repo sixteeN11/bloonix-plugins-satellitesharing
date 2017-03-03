@@ -8,20 +8,22 @@ use JSON;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Feb 2017.
 # Description : Bloonix plugin to check status of salt master minions.
-# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'Minions accepted',
     option      => 'minions',
     description => 'Accepted minions',
     value_type  => 'string',
+    example     => 'blunix.de',
     multiple    => 1,
 );
 
@@ -30,6 +32,7 @@ $plugin->add_option(
     option      => 'minions-rejected',
     description => 'Minions rejected',
     value_type  => 'string',
+    example     => 'beta.blunix.de',
     multiple    => 1,
 );
 
@@ -38,6 +41,7 @@ $plugin->add_option(
     option      => 'minions-denied',
     description => 'Minions denied',
     value_type  => 'string',
+    example     => 'bad.blunix.de',
     multiple    => 1,
 );
 
@@ -46,6 +50,7 @@ $plugin->add_option(
     option      => 'minions-pre',
     description => 'Minions pre',
     value_type  => 'string',
+    example     => 'pre.blunix.de',
     multiple    => 1,
 );
 
@@ -69,18 +74,18 @@ my $opt = $plugin->parse_options;
 # 3. Commands ouput indicate success (salt commands' return status cannot be
 #    relied upon to determine success or failure of command).
 #
-# my $cmd1 = 'salt-key --out json';
 
-my $saltkey_cmd = `which salt-key`;
-unless ( chomp($saltkey_cmd) ) {
+my $cmd;
+chomp( $cmd = `which salt-key` );
+unless ($cmd) {
     $plugin->exit(
         status  => 'UNKNOWN',
         message => 'Cannot find salt-key command.'
     );
 }
 
-my $salt_cmd = `which salt`;
-unless ( chomp($salt_cmd) ) {
+chmop( $cmd = `which salt` );
+unless ($cmd) {
     $plugin->exit(
         status  => 'UNKNOWN',
         message => 'Cannot find salt command.'
@@ -104,10 +109,26 @@ if ( $? & 127 ) {
     );
 }
 
+#------------------------------------------------------------------------------
+#
 # Minion categories: rejected, denied, pre, accepted.
 # There could be:
 # a) Entries passed that are missing from server's minions list.
 # b) Entries in server's minions list that were not passed.
+#
+# The format of the data we get back is below.
+#
+# root@utility.blubits.org:~ # salt-key --out json
+# {
+#     "minions_rejected": [],
+#     "minions_denied": [],
+#     "minions_pre": [],
+#     "minions": [
+#         "foo.bar.com",
+#         "1234.example.com",
+#     ...
+# }
+#
 
 my ( %check_accepted, %check_rejected, %check_denied, %check_pre,
     %accepted, %rejected, %denied, %pre );
@@ -191,11 +212,27 @@ unless (@hosts) {
     );
 }
 
-my $cmd
+$cmd
     = "salt --timeout 5 --out json -E '"
     . ( join '|', @hosts )
     . "' test.ping";
-$output = `$cmd`;
+chomp( $output = `$cmd` );
+
+#------------------------------------------------------------------------------
+#
+# The format of the data we get back is below:
+# # List items have to be seperated by "|"
+# salt --timeout 5 --out json -E 'qux.example.com|foo.bar.com' test.ping
+# {
+#     "qux.example.com": true
+# }
+# {
+#     "foo.bar.com: "Minion did not return. [No response]"
+# }
+#
+# So the output isn't valid JSON, but is similar. The entry for each host is
+# within braces and the host name is the key with ':' separating it from the
+# value.
 
 my ( @noping, $response, $host );
 while ( $output =~ /{\s*+"([^"]+)"\s*+:\s*+([^}]+)\s*+}/gcm ) {
