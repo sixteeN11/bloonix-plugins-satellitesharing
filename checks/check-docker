@@ -8,25 +8,27 @@ use JSON;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Feb 2017.
 # Description : Bloonix plugin to check status of docker instance.
-# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'Container Name or ID',
     option      => 'container',
     description => 'Container name or id',
     value_type  => 'string',
-    mandatory   => 1
+    mandatory   => 1,
+    example     => 'f4c74eb027cf',
 );
 
 $plugin->example(
-    description => "Check whether the container 'f4c74eb027cf' is running",
+    description => "Verify that the container 'f4c74eb027cf' is running",
     arguments   => [ container => 'f4c74eb027cf' ]
 );
 
@@ -39,8 +41,9 @@ my $opt = $plugin->parse_options;
 # 1. Can execute docker command.
 #
 
-my $exe = `which docker`;
-unless ( chomp($exe) ) {
+my $exe;
+chomp( $exe = `which docker` );
+unless ($exe) {
     $plugin->exit(
         status  => 'UNKNOWN',
         message => "Cannot find 'docker' command."
@@ -48,7 +51,7 @@ unless ( chomp($exe) ) {
 }
 
 my $output;
-eval { chomp( $output = `docker inspect $opt->{container} | grep Status` ); };
+eval { chomp( $output = `docker inspect $opt->{container} | grep Status 2>&1` ); };
 
 if ( $? == -1 ) {
     $plugin->exit(
@@ -64,18 +67,33 @@ if ( $? & 127 ) {
     );
 }
 
+if ( $? >> 8 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => $output
+    );
+}
+
+#------------------------------------------------------------------------------
+
+##########       Command successfully executed, process status.    ############
+
 my ($message) = $output =~ /"Status"\s*+:\s*+"([^"]+)"/gm;
 my $status = $message eq 'running' ? 'OK' : 'CRITICAL';
 
 my @lines;
 eval { @lines = `docker stats --no-stream $opt->{container}` };
 
+chomp( $lines[1] );
 my ($container, $cpu,     $mem_usage, $mem_limit, $mem_pct,
     $net_in,    $net_out, $blk_in,    $blk_out
-) = split /(\s+\/\s+|\s+)/, $lines[1];
+) = split /(?:\s{2,}|\s+\/\s+)/, $lines[1];
 
-$cpu =~ s/%//g;
-$mem_pct =~ s/%//g;
+s/[% ]//
+    foreach ( $cpu, $mem_usage, $mem_limit, $mem_pct, $net_in, $net_out,
+    $blk_in, $blk_out );
+$_ = bytes($_)
+    foreach ( $mem_usage, $mem_limit, $net_in, $net_out, $blk_in, $blk_out );
 
 $plugin->exit(
     status  => $status,
@@ -91,5 +109,36 @@ $plugin->exit(
         blk_out   => $blk_out,
     }
 );
+
+#------------------------------------------------------------------------------
+
+use constant {
+    KILOBYTE => 1024,
+    MEGABYTE => 1048576,
+    GIGABYTE => 1073741824,
+    TERABYTE => 1099511627776,
+    PETABYTE => 1125899906842624,
+    EXABYTE  => 1152921504606846976
+};
+
+sub bytes {
+    my $number = shift;
+    if ( $number =~ /^([0-9]+)([a-zA-Z])[a-zA-Z]*$/ ) {
+        if ( "\U$2" eq 'K' ) {
+            $number = $1 * KILOBYTE;
+        } elsif ( "\U$2" eq 'M' ) {
+            $number = $1 * MEGABYTE;
+        } elsif ( "\U$2" eq 'G' ) {
+            $number = $1 * GIGABYTE;
+        } elsif ( "\U$2" eq 'T' ) {
+            $number = $1 * TERABYTE;
+        } elsif ( "\U$2" eq 'P' ) {
+            $number = $1 * PETABYTE;
+        } elsif ( "\U$2" eq 'E' ) {
+            $number = $1 * EXABYTE;
+        }
+    }
+    return $number;
+}
 
 #------------------------------------------------------------------------------
