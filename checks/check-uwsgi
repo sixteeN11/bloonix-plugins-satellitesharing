@@ -8,14 +8,15 @@ use JSON;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Date        : Jan 2017
 # Description : uWSGI Bloonix plugin to get and display uWSGI stats.
-# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'uWSGI Stats Server',
@@ -23,6 +24,16 @@ $plugin->add_option(
     description => 'unix domain socket or IP:PORT of uWSGI Stats Server',
     value_type  => 'string',
     mandatory   => 1,
+    example     => '/run/uwsgi/tmp.socket',
+);
+
+$plugin->add_option(
+    name        => 'alternate uwsgi executable to use',
+    option      => 'executable',
+    description => 'Optional full path to non-default uwsgi executable',
+    value_type  => 'string',
+    mandatory   => 0,
+    example     => '/srv/oscar/uwsgienv/bin/uwsgi',
 );
 
 $plugin->has_threshold(
@@ -36,20 +47,23 @@ $plugin->has_threshold(
 $plugin->example(
     description =>
         "Get uWSGI stats from Stats Server listening on UNIX domain socket"
-        . ". Warn when 50MB RAM or more used by the uWSGI server",
+        . ". Warn when 50MB RAM or more used by the uWSGI server"
+        . ". Use '/srv/oscar/uwsgienv/bin/uwsgi' executable instead of default.",
     arguments => [
-        server  => '/tmp/statsock',
-        warning => 'rss;ge;52428800',
+        server     => '/tmp/statsock',
+        warning    => 'rss;ge;50MB',
+        executable => '/srv/oscar/uwsgienv/bin/uwsgi',
     ]
 );
 
 $plugin->example(
     description =>
         "Get uWSGI stats from Stats Server listening on IP address and port"
-        . ". Warn when 50MB RAM or more used by the uWSGI server",
+        . ". Warn when 50MB RAM or more used by the uWSGI server"
+        . ". Use default uwsgi executable.",
     arguments => [
         server  => '127.0.0.1:1717',
-        warning => 'rss;ge;52428800',
+        warning => 'rss;ge;50MB',
     ]
 );
 
@@ -63,11 +77,12 @@ my $opt = $plugin->parse_options;
 # 2. Can connect to uWSGI Stats Server.
 # 3. uwsgi command execution successful.
 
-my $exe = `which uwsgi`;
-unless ( chomp($exe) ) {
+my $exe = $opt->{executable} || `which uwsgi`;
+chomp($exe);
+unless ( $exe && -x $exe ) {
     $plugin->exit(
         status  => 'UNKNOWN',
-        message => 'Cannot find uwsgi command.'
+        message => 'Cannot find or execute uwsgi command.'
     );
 }
 
@@ -91,7 +106,6 @@ if ( $? & 127 ) {
 
 if ( $? >> 8 ) {
 
-    #   if ( $output =~ /No such file or directory/ ) {
     if ( $output =~ /uwsgi_connect\(\)/ ) {
         $plugin->exit(
             status  => 'UNKNOWN',
@@ -100,13 +114,7 @@ if ( $? >> 8 ) {
         );
     }
 
-    # With port with non-existent server listening get:
-    # uwsgi_connect(): Operation now in progress [core/uwsgi.c line 4773]
-
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => 'uwsgi command failed with exit value ' . ( $? >> 8 )
-    );
+    $plugin->exit( status => 'UNKNOWN', message => $output );
 }
 
 #------------------------------------------------------------------------------
