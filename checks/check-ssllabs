@@ -8,28 +8,22 @@ use JSON;
 #------------------------------------------------------------------------------
 #
 # Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Feb 2017.
 # Description : Bloonix plugin to check SSL setups.
-# License     : Same as perl's. Copyright (C) 2017 Ebow Halm.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
 #
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.1' );
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
 $plugin->add_option(
     name        => 'File',
     option      => 'file',
     description => 'File where JSON output of ssllabs result written',
     value_type  => 'string',
-    mandatory   => 1,
-);
-
-$plugin->add_option(
-    name        => 'Host',
-    option      => 'host',
-    description => 'Host to check its SSL setup',
-    value_type  => 'string',
+    example     => '/var/cache/bloonix/ssllabs_name-of-check.json',
     mandatory   => 1,
 );
 
@@ -47,7 +41,6 @@ $plugin->example(
     description => "Warn when blunix.de's SSLLabs scan grade is worse than A",
     arguments   => [
         file  => '/var/cache/bloonix/ssllabs_name-of-check.json',
-        host  => 'blunix.de',
         grade => 'A'
     ]
 );
@@ -80,15 +73,8 @@ if ($@) {
     );
 }
 
-my ( $grade, $gradeTrustIgnored );
-
-for my $row (@$results) {
-    next unless $row->{host} eq $opt->{host};
-
-    $grade             = $row->{endpoints}->[0]->{grade};
-    $gradeTrustIgnored = $row->{endpoints}->[0]->{gradeTrustIgnored};
-    last;
-}
+my $grade             = $results->[0]->{endpoints}->[0]->{grade};
+my $gradeTrustIgnored = $results->[0]->{endpoints}->[0]->{gradeTrustIgnored};
 
 if ($grade) {
 
