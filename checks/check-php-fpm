@@ -7,8 +7,17 @@ use warnings;
 use Bloonix::Plugin;
 
 #------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Jan 2017.
+# Description : Bloonix plugin to get and alert on PHP-FPM stats.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+#
+#------------------------------------------------------------------------------
 
-my $plugin = Bloonix::Plugin->new( version => "0.1" );
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => 0.2 );
 
 $plugin->add_option(
     name       => "URL",
@@ -16,6 +25,7 @@ $plugin->add_option(
     value      => "url",
     value_type => "string",
     mandatory  => 1,
+    example    => 'http://127.0.0.1/fpm_status',
     prepare    => sub {
         if ( $_[0] =~ m@^https{0,1}://[^/]+\z@ ) {
             $_[0] = "$_[0]/";
@@ -24,18 +34,19 @@ $plugin->add_option(
     regex       => qr@^https{0,1}://[^']+/[^\s']*\z@,
     description => "This is the full URL to get the PHP-FPM status from."
 );
+$plugin->has_host;
+$plugin->has_auth_basic;
 
 $plugin->has_threshold(
     keys => [qw( slow connections active total listen )] );
 $plugin->has_timeout( default => 10 );
-$plugin->has_auth_basic;
-$plugin->has_host;
 $plugin->has_use_ipv6;
 
 $plugin->example(
-    description => "Check PHP-FPM status",
+    description => "Check PHP-FPM status for host bloonix.de",
     arguments   => [
-        url      => "http://localhost/fpm_status",
+        url      => 'http://127.0.0.1/fpm_status',
+        host     => 'bloonix.de',
         critical => "slow:gt:5",
         warning  => "connections:gt:200",
     ]
@@ -43,7 +54,7 @@ $plugin->example(
 
 my $opt = $plugin->parse_options;
 
-my $curl = "curl --retry 0 --silent";
+my $curl = "curl --fail --retry 0 --silent";
 
 $curl .= " --insecure" if $opt->{url} =~ /^https/;
 $curl .= " --basic --user '$opt->{username}:$opt->{password}'"
@@ -62,6 +73,9 @@ if ( $opt->{host} ) {
     $curl .= " --header 'Host: $opt->{host}'";
 }
 
+#------------------------------------------------------------------------------
+#
+
 my ($content);
 eval {
     $SIG{__DIE__} = sub { alarm(0) };
@@ -71,6 +85,13 @@ eval {
 
     if ( $? > 0 ) {
         my $err = $? >> 8;
+        if ( $err == 22 ) {
+            $plugin->exit(
+                status  => "CRITICAL",
+                message => "Failed to retrieve URL '$opt->{url}'. "
+                    . 'Does the URL exist and is the server running?'
+            );
+        }
         die "curl error code $err\n";
     }
 
@@ -95,7 +116,26 @@ if ($@) {
     }
 }
 
-# Parse $content
+#------------------------------------------------------------------------------
+#
+# Sample output:
+#
+# $ curl http://localhost/server-status
+# pool: default
+# process manager: dynamic
+# start time: 11/Dec/2014:17:51:33 -0500
+# start since: 61383
+# accepted conn: 4682
+# listen queue: 0
+# max listen queue: 0
+# listen queue len: 0
+# idle processes: 11
+# active processes: 1
+# total processes: 12
+# max active processes: 2
+# max children reached: 0
+# slow requests: 3
+
 my %data;
 $data{$1} = $2 while $content =~ /\G\s*([^:]+):\s*(.*)/gmc;
 
@@ -118,10 +158,12 @@ my %keys = (
 
 my %stat = map { $keys{$_}, exists $data{$_} ? $data{$_} : 0 } keys %keys;
 
-$plugin->delta( stat => \%stat, keys => [qw( uptime connections )]);
+$plugin->delta( stat => \%stat, keys => [qw( uptime connections )] );
 
 $plugin->check_thresholds(
     stats       => \%stat,
     upshot_keys => [qw(pool started active idle slow)],
     exit        => "yes"
 );
+
+#------------------------------------------------------------------------------
