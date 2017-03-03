@@ -10,20 +10,3 @@ plugin {
     abstract ASN origin check
     description Check Autonomous System Number (ASN) of public facing IP.
 }
-
-statistic {
-    statkey asn
-    stattype string 
-    datatype varchar(10)
-    alias ASN
-    description Autonomous System Number (ASN) of host's public facing IP.
-}
-
-statistic {
-    statkey time
-    alias Response time
-    datatype float
-    units ms
-    description Time in milliseconds waiting for response.
-}
-

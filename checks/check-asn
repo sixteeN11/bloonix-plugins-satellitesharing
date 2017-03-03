@@ -8,62 +8,118 @@ use Bloonix::Plugin;
 use Bloonix::IPC::Cmd;
 
 #------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Jan 2017.
+# Description : Bloonix plugin to get/check the Autonomous System Number of a
+#               host's public IP.
+# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+#
+#------------------------------------------------------------------------------
 
-my $plugin = Bloonix::Plugin->new();
+###########     Integrate into Bloonix plugin infrastructure.      ############
 
-$plugin->version("0.1");
+my $plugin = Bloonix::Plugin->new( version => '0.2' );
 
-$plugin->example(
-    description => "Check ASN of host's public IP",
-    arguments   => []
-);
-
-$plugin->has_threshold( keys => [ { key => 'time' } ] );
-$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => "Expected ASN",
     option      => "asn",
-    value       => "37103",
+    example     => "37103",
     value_type  => "string",
     mandatory   => 0,
-    description => "This is the ASN you expect it to return."
+    description => "This is the ASN you expect it to have."
 );
 
-# --------------------------------------------------
-# Parse options
-# --------------------------------------------------
+$plugin->example(
+    description => "Get ASN of host's public IP.",
+    arguments   => []
+);
+
+$plugin->example(
+    description => "Verify ASN of host's public IP is 37103.",
+    arguments   => [ asn => '37103' ]
+);
 
 my $opt = $plugin->parse_options;
 
-# --------------------------------------------------
-# ASN request
-# --------------------------------------------------
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute whois command.
+# 2. Can execute dig command.
+# 3. Can execute awk command.
+
+my $exe;
+chomp( $exe = `which whois` );
+unless ($exe) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Cannot find 'whois' command. Is whois installed?"
+    );
+}
+
+chomp( $exe = `which dig` );
+unless ($exe) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Cannot find 'dig' command. Is dig installed?"
+    );
+}
+
+chomp( $exe = `which awk` );
+unless ($exe) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Cannot find 'awk' command. Is awk installed?"
+    );
+}
 
 my $cmd
-    = 'whois -h whois.cymru.com $(dig +short myip.opendns.com @resolver1.opendns.com) | awk \'FNR==2{print $1}\'';
+    = 'whois -h whois.cymru.com '
+    . '$(dig +short myip.opendns.com @resolver1.opendns.com) '
+    . '| awk \'FNR==2{print $1}\'';
 
-my $time = $plugin->runtime;
-my $ipc  = $plugin->execute(
-    command     => "$cmd",
-    timeout     => $opt->{timeout},
-    kill_signal => 9
-);
-$time = $plugin->runtime;
+my $asn;
+eval { chomp( $asn = `$cmd` ); };
 
-my $asn = $ipc->stdout->[0];
-chomp($asn);
+if ( $? == -1 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Failed to execute: $!"
+    );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+if ( $? >> 8 ) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Command failed with exit value ' . ( $? >> 8 )
+    );
+}
+
+#------------------------------------------------------------------------------
+
+##########       Command successfully executed, process ASN.       ############
+
 if ( $opt->{asn} && $asn ne $opt->{asn} ) {
-
     $plugin->exit(
         status  => "WARNING",
         message => "ASN: $asn, expected $opt->{asn}",
-        stats   => { asn => $asn, time => $time }
-    );
-} else {
-
-    $plugin->exit(
-        status  => "OK",
-        message => "AS$asn",
-        stats   => { asn => "$asn", time => $time }
+        stats   => { asn => $asn }
     );
 }
+
+$plugin->exit(
+    status  => "OK",
+    message => "AS$asn",
+    stats   => { asn => "$asn" }
+);
+
+#------------------------------------------------------------------------------
