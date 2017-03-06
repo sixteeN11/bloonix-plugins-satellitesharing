@@ -78,7 +78,7 @@ EOF
         # - Create the cron file if the plugin has a cron job.
 
         # - Create the deb.
-        dpkg-buildpackage
+        DESTDIR=$PWD dpkg-buildpackage
 
     else
         echo "  Ignoring: $arg";
