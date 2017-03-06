@@ -9,7 +9,7 @@ use Bloonix::Plugin;
 # Author      : Ebow Halm <ejh@cpan.org>
 # Created     : Feb 2017.
 # Description : Shorewall Bloonix plugin to check rules and alert on thresholds.
-# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
 #------------------------------------------------------------------------------
 

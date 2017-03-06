@@ -10,7 +10,7 @@ use JSON;
 # Author      : Ebow Halm <ejh@cpan.org>
 # Created     : Feb 2017.
 # Description : Bloonix plugin to check SSL setups.
-# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
 #------------------------------------------------------------------------------
 

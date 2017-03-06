@@ -10,7 +10,7 @@ use JSON;
 # Author      : Ebow Halm <ejh@cpan.org>
 # Date        : Jan 2017
 # Description : uWSGI Bloonix plugin to get and display uWSGI stats.
-# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
 #------------------------------------------------------------------------------
 

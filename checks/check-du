@@ -9,7 +9,7 @@ use Bloonix::Plugin;
 # Author      : Ebow Halm <ejh@cpan.org>
 # Date        : Feb 2017
 # Description : Bloonix plugin to check directory size.
-# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
 #------------------------------------------------------------------------------
 

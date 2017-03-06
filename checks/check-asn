@@ -13,7 +13,7 @@ use Bloonix::IPC::Cmd;
 # Created     : Jan 2017.
 # Description : Bloonix plugin to get/check the Autonomous System Number of a
 #               host's public IP.
-# License     : Apache 2.0. Copyright (C) 2017 Blunix GmbH.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
 #------------------------------------------------------------------------------
 
