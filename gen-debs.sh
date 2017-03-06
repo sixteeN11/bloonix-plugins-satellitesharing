@@ -35,13 +35,15 @@ do
 
         # echo -e and use \t for tab
         cat >"$stage/Makefile" <<EOF
-IMPORT_DIR=/usr/lib/bloonix/etc/plugins/import
-PLUGIN_DIR=/usr/lib/bloonix/plugins
+IMPORT_DIR=/usr/lib/bloonix/etc/plugins/import/satsharing
+PLUGIN_DIR=/usr/lib/bloonix/etc/plugins
+CHECK_DIR=/usr/lib/bloonix/plugins
 install:
-	install -d \$(DESTDIR)\$(IMPORT_DIR) \$(DESTDIR)\$(PLUGIN_DIR)
+	install -d \$(DESTDIR)\$(IMPORT_DIR) \$(DESTDIR)\$(CHECK_DIR) \$(DESTDIR)\$(PLUGIN_DIR)
 	bloonix-create-plugin plugin-$arg > \$(DESTDIR)\$(IMPORT_DIR)/plugin-$arg
-	install ./check-$arg \$(DESTDIR)\$(PLUGIN_DIR)
-	chmod 755 \$(DESTDIR)\$(PLUGIN_DIR)/check-$arg
+	install ./plugin-$arg \$(DESTDIR)\$(PLUGIN_DIR)
+	install ./check-$arg \$(DESTDIR)\$(CHECK_DIR)
+	chmod 755 \$(DESTDIR)\$(CHECK_DIR)/check-$arg
 EOF
 
         cd "/tmp/$package"
@@ -67,11 +69,11 @@ EOF
         sed -i -e 's|^Homepage: .*|Homepage: https://satellitesharing.org|' ./debian/control
         sed -i -e 's|^#Vcs-Git: .*|Vcs-Git: git://git@github.com:satellitesharing/bloonix-plugins-satellitesharing.git|' ./debian/control 
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
-        sed -i -e 's|^Depends: |Depends: bloonix-plugin-config, perl, |' ./debian/control
+        sed -i -e 's|^Depends: .*|Depends: bloonix-plugin-config|' ./debian/control
         sed -i -e "s|^Description: .*|Description: $description|" ./debian/control
 
         # Update the webgui database with the plugin's details on installation.
-        sed -i -e "s|\sconfigure)| configure)\n\tbloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/plugin-$arg|" ./debian/postinst.ex
+        sed -i -e "s|\sconfigure)| configure)\n\tbloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satsharing/plugin-$arg|" ./debian/postinst.ex
         mv ./debian/postinst.ex ./debian/postinst
 
         # - Update the debian/copyright.
