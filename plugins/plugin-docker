@@ -1,5 +1,5 @@
 plugin {
-    id 4110005
+    id 3000005
     plugin Docker.Check
     command check-docker
     datatype statistic

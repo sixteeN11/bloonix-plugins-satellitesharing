@@ -1,5 +1,5 @@
 plugin {
-    id 4110006
+    id 3000006
     plugin Saltstack.Master.Minions.Check
     command check-saltmaster-minions
     datatype none

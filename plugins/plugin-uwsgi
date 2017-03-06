@@ -1,5 +1,5 @@
 plugin {
-    id 4110001
+    id 3000008
     plugin uWSGI.Check
     command check-uwsgi
     datatype statistic

@@ -1,5 +1,5 @@
 plugin {
-    id 4110004
+    id 3000004
     plugin du.Check
     command check-du
     datatype statistic

@@ -1,5 +1,5 @@
 plugin {
-    id 4110003
+    id 3000009
     plugin SSLLabs.Check
     command check-ssllabs
     datatype none
