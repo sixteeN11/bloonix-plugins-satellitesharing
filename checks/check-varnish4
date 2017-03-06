@@ -195,7 +195,7 @@ my @COUNTERS = (
 
 #------------------------------------------------------------------------------
 
-my $plugin = Bloonix::Plugin->new( version => 0.2 );
+my $plugin = Bloonix::Plugin->new( version => '0.3' );
 
 $plugin->example(
     description => "Check Varnish4 cache",
