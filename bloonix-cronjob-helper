@@ -1,0 +1,132 @@
+#!/bin/bash
+#
+# Execute cronjobs with this program like:
+# * * * * * bloonix-cronjob-helper 'my php cronjob' /usr/bin/php /path/to/my/script.php argument1 argument2
+# The script will create a results file readbale by the bloonix plugin check-cronjob
+# It will also write the output of the job to a logfile and to stdout
+
+# Switches for this script
+cmd_stdout=false
+
+# Set variables
+whoami=$(id -nu)
+identifier=$1
+logfile_command=/var/log/cron/$whoami/$identifier.log
+log_dir=/var/lib/bloonix/agent/cronjob/$whoami
+logfile_running="$log_dir/.$identifier.running"
+logfile_done="$log_dir/$identifier"
+shift
+
+# Usage information for this script
+usage() {
+    echo "Usage: $0 JOB_IDENTIFIER COMMAND [ARGUMENT] [ARGUMENT] [...]"
+    echo ""
+    echo "Run a PROGRAM as subprocess and save performance information about it"
+    echo "The status information will be written to a status file, where it can be"
+    echo "read and interpreted by the bloonix agent."
+    echo ""
+    echo "Status file is written to $log_dir"
+    echo "Logfiles are written to $logfile_command"
+    exit 1
+}
+
+# Check if we got any arguments given
+if [ $# -lt 1 ]; then
+    usage >&2
+fi
+# Check if the log dir exists
+if [ ! -d "$log_dir" ]; then
+    mkdir -p $log_dir
+fi
+# Check the arguments
+if ! type $1 >/dev/null 2>&1; then
+    echo -e "ERROR: Cannot run $1. Command or executable not found.\n" >&2
+    usage >&2
+fi
+if ! [[ -f $logfile_command ]]; then
+    mkdir -p $(dirname $logfile_command)
+    touch $logfile_command 2>&1 >/dev/null || echo -e "ERROR: Cannot create logfile $logfile_command.\n" >&2
+    usage >&2
+fi
+
+
+
+# Get the start date
+start_date=$(date +"start_time %s" > "$logfile_running")
+
+# Run the cronjob and catch its statistics via /usr/bin/time
+tmp_raw_out_file=$(mktemp)
+time_output=$( { /usr/bin/time -o $tmp_raw_out_file -f '
+command %C
+unshared_size %D
+major_page_fault %F
+reads %I
+avg_mem_kbytes %K
+max_res_kbytes %M
+writes %O
+cpu_percent %P
+minor_page_fault %R
+system_time %S
+user_time %U
+swap_num %W
+system_page_size %Z
+invol_context_switches %c
+real_time %e
+signal_number %k
+sock_msg_rec %r
+sock_msg_send %s
+avg_res_size %t
+vol_context_switches %w
+exit_code %x
+' $@; } 2>&1 )
+
+
+# Set an exit code we will know was this default setting
+exit_code=257
+# Reformat the time output for bloonix and append it to the logfile_running
+echo -n "" > $logfile_running
+cat $tmp_raw_out_file | ( while read line; do
+
+    line_name=$(echo $line | awk '{print $1}')
+    line_value=$(echo $line | awk '{for (i=2; i<NF; i++) printf $i " "; print $NF}')
+
+    # Skip empty lines
+    if [[ $line == '' || $line == *'Command exited with non-zero status'* ]]; then
+        continue
+
+    # Remove the % sign from percet values
+    elif [[ $line_name == 'cpu_percent' ]]; then
+        line_value=$(echo $line_value | sed 's/\%//g')
+
+    # Format 01.23 seconds to milliseconds
+    elif [[ $line_name == 'user_time' || $line_name == 'system_time' || $line_name == 'real_time' ]]; then
+        line_value=$(awk "BEGIN {print $line_value * 1000}")
+
+    # If we have the exit_code, save that so we can exit with it
+    elif [[ $line_name == 'exit_code' ]]; then
+        exit_code=$line_value
+
+    fi
+
+    # Append the (possibly formatted) line
+    echo $line_name $line_value >> $logfile_running
+
+done
+rm $tmp_raw_out_file
+
+# Write the output of the command to the logfile
+echo "$time_output" >> $logfile_command
+
+# Move the status result file in place
+mv $logfile_running $logfile_done
+
+# Write the time_output to stdout if configured
+if [[ $cmd_stdout == 'true' ]]; then
+    echo "$time_output"
+fi
+
+# Exit with the exit status of the command executed
+exit $exit_code
+
+# This closes the pipe subshell we used to transport the exit_code variable
+)
