@@ -1,0 +1,284 @@
+{
+   "chart" : [
+      {
+         "id" : "1",
+         "options" : {
+            "chart-type" : "area",
+            "units" : "null",
+            "ylabel" : "exit code",
+            "series" : [
+               {
+                  "name" : "exit_code",
+                  "color" : "#005479"
+               },
+               {
+                   "name" : "real_time",
+                   "color" : "#045479"
+               }
+            ],
+         },
+         "title" : "The Exit code of the cronjob"
+      }
+   ],
+   "plugin" : {
+      "info" : {
+         "flags" : "",
+         "examples" : [
+            {
+               "description" : [
+                  "Define a cronjob status file path and set warning and critical thresholds for the results from /usr/bin/time.",
+                  "",
+                  "- Set status to warning if real_time is higher than 60 seconds",
+                  "- Set status to critical if exit status is greater than 0"
+               ],
+               "command_line" : "check-cronjob --statusfile /var/lib/bloonix/agent/cronjob/root/bloonix_update_agent_host_config --warning 'real_time:gt:60' --critical 'exit_code:gt:0'",
+               "arguments" : [
+                  "warning",
+                  "real_time:gt:60",
+                  "critical",
+                  "exit_code:gt:0"
+               ]
+            }
+         ],
+         "plugin" : "check-cronjob",
+         "version" : "0.1",
+         "options" : [
+            {
+               "description": "This is the file name of the cronjob status file to check.",
+               "mandatory": 1,
+               "option": "statusfile",
+               "default": "/var/lib/bloonix/agent/cronjob/root/identifier",
+               "multiple": 0,
+               "name": "Filename",
+               "value_type": "string",
+               "value_desc": "statusfile"
+            },
+            {
+               "option" : "warning",
+               "name" : "Warning threshold",
+               "default" : 0,
+               "mandatory" : 0,
+               "description" : "This is the warning threshold. When the value exceeds the threshold a warning status is triggered. Please see the examples for more information.",
+               "value_type" : "number",
+               "multiple" : 1,
+               "value_desc" : "warning threshold"
+            },
+            {
+               "multiple" : 1,
+               "value_desc" : "critical threshold",
+               "description" : "This is the critical threshold. When the value exceeds the threshold a warning status is triggered. Please see the examples for more information.",
+               "mandatory" : 0,
+               "value_type" : "number",
+               "name" : "Critical threshold",
+               "default" : 0,
+               "option" : "critical"
+            }
+         ],
+         "thresholds" : {
+            "info" : [
+               "How to set warning and critical thresholds:\n\n",
+               "  It's possible to set thresholds for one or more statistic keys.\n",
+               "  The format to add a threshold for a statistic key is:\n\n",
+               "    key:operator:threshold\n\n",
+               "  If no operator is set then the default operator is 'ge'.\n\n",
+               "  The following operators are available:\n\n",
+               "    lt = less than\n",
+               "    le = less than or equal\n",
+               "    gt = greater than\n",
+               "    ge = greater than or equal\n",
+               "    eq = equal\n",
+               "    ne = not equal\n"
+            ],
+            "options" : [
+               {
+                  "key": "start_time",
+                  "unit": "none"
+               },
+               {
+                  "key": "real_time",
+                  "unit": "none"
+               },
+               {
+                  "key": "user_time",
+                  "unit": "none"
+               },
+               {
+                  "key": "system_time",
+                  "unit": "none"
+               },
+               {
+                  "key": "file_ctime",
+                  "unit": "none"
+               },
+               {
+                  "key": "reads",
+                  "unit": "none"
+               },
+               {
+                  "key": "writes",
+                  "unit": "none"
+               },
+               {
+                  "key": "max_res_kbytes",
+                  "unit": "none"
+               },
+               {
+                  "key": "avg_mem_kbytes",
+                  "unit": "none"
+               },
+               {
+                  "key": "exit_code",
+                  "unit": "none"
+               },
+               {
+                  "key": "invol_context_switches",
+                  "unit": "none"
+               },
+               {
+                  "key": "vol_context_switches",
+                  "unit": "none"
+               }
+            ]
+         }
+      },
+      "id" : "10050",
+      "abstract" : "Linux cronjob check",
+      "netaccess" : "no",
+      "command" : "check-cronjob",
+      "plugin" : "Check.Cronjob",
+      "datatype" : "statistic",
+      "category" : "Linux",
+      "prefer" : "localhost",
+      "description" : "Get statistics and exit code for a cronjob."
+   },
+   "statistic" : [
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "unshared_size",
+         "alias" : "",
+         "description" : "."
+      },
+
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "major_page_fault",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "avg_mem_kbytes",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "max_res_kbytes",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "system_page_size",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "units" : "bytes",
+         "statkey" : "avg_res_size",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "units" : "percent",
+         "statkey" : "cpu_percent",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "system_time",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "user_time",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "real_time",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "reads",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "writes",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "minor_page_fault",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "swap_num",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "invol_context_switches",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "signal_number",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "sock_msg_rec",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "sock_msg_send",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "vol_context_switches",
+         "alias" : "",
+         "description" : "."
+      },
+      {
+         "datatype" : "bigint"
+         "statkey" : "exit_code",
+         "alias" : "",
+         "description" : "."
+      }
+   ]
+}
