@@ -46,15 +46,19 @@ EOF
         tar czf "$package-$version.tar.gz" "$package-$version"
         cd -
 
-        DEBDIR=./debs
-        mkdir -p $DEBDIR
-        rm -f "$DEBDIR/$package-$version.tar.gz"
-        rm -f "$DEBDIR/${package}_$version.orig.tar.gz"
-        rm -fr "$DEBDIR/$package-$version"
+        BUILD_DIR=./build
+        mkdir -p $BUILD_DIR
 
-        cp "/tmp/$package/$package-$version.tar.gz" $DEBDIR
+        DEB_DIR=./debs
+        mkdir -p $DEB_DIR
 
-        cd "$DEBDIR"
+        rm -f "$BUILD_DIR/$package-$version.tar.gz"
+        rm -f "$BUILD_DIR/${package}_$version.orig.tar.gz"
+        rm -fr "$BUILD_DIR/$package-$version"
+
+        cp "/tmp/$package/$package-$version.tar.gz" $BUILD_DIR
+
+        cd "$BUILD_DIR"
         tar xzf "$package-$version.tar.gz"
         cd "$package-$version"
         dh_make --single --yes --copyright Apache -f "../$package-$version.tar.gz"
@@ -67,7 +71,8 @@ EOF
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
         sed -i -e "s|^Description: .*|Description: $description|" ./debian/control
 
-        # Update the webgui database with the plugin's details on installation.
+        # Update the webgui database with the plugin's details on installation
+        # when installed on a webgui system.
         sed -i -e "s|\sconfigure)| configure)\n\tif [[ -f /usr/bin/bloonix-load-plugins ]]; then bloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satsharing/plugin-$arg; fi|" ./debian/postinst.ex
         mv ./debian/postinst.ex ./debian/postinst
 
@@ -76,7 +81,8 @@ EOF
 
         # - Create the deb.
         DESTDIR=$PWD dpkg-buildpackage
-
+        cp "../${package}_$version-1_all.deb" ../../$DEB_DIR/
+        cp "../${package}_$version-1.dsc" ../../$DEB_DIR/
     else
         echo "  Ignoring: $arg";
     fi
