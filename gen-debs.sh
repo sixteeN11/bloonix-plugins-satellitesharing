@@ -10,7 +10,6 @@
 START_DIR=$(pwd)
 for arg in "$@"
 do
-    echo $START_DIR
     cd $START_DIR
 
     check="./checks/check-$arg";
@@ -18,15 +17,12 @@ do
 
     if [[ -f "$check" && -f "$plugin" ]]
     then
-        echo "Processing: $arg";
 
         version=$(grep -i version $check | perl -pe 'if (/((?:\d+\.?)+)/) { $v=$1; s/.*/$v/}')
         description=$(grep -i description $plugin | head -1 | sed -e 's/^ *description *//')
-
-        echo "   Version: $version";
-        package="bloonix-plugin-$arg";
-
+        package="bloonix-plugins-satellitesharing-$arg";
         stage="/tmp/$package/$package-$version";
+
         rm -fr "$stage";
         mkdir -p "$stage";
 
@@ -69,11 +65,10 @@ EOF
         sed -i -e 's|^Homepage: .*|Homepage: https://satellitesharing.org|' ./debian/control
         sed -i -e 's|^#Vcs-Git: .*|Vcs-Git: git://git@github.com:satellitesharing/bloonix-plugins-satellitesharing.git|' ./debian/control 
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
-        sed -i -e 's|^Depends: .*|Depends: bloonix-plugin-config|' ./debian/control
         sed -i -e "s|^Description: .*|Description: $description|" ./debian/control
 
         # Update the webgui database with the plugin's details on installation.
-        sed -i -e "s|\sconfigure)| configure)\n\tbloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satsharing/plugin-$arg|" ./debian/postinst.ex
+        sed -i -e "s|\sconfigure)| configure)\n\tif [[ -f /usr/bin/bloonix-load-plugins ]]; then bloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satsharing/plugin-$arg; fi|" ./debian/postinst.ex
         mv ./debian/postinst.ex ./debian/postinst
 
         # - Update the debian/copyright.
