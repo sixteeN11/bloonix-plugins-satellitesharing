@@ -31,15 +31,16 @@ do
 
         # echo -e and use \t for tab
         cat >"$stage/Makefile" <<EOF
-IMPORT_DIR=/usr/lib/bloonix/etc/plugins/import/satsharing
+IMPORT_DIR=/usr/lib/bloonix/etc/plugins/import/satellitesharing
 PLUGIN_DIR=/usr/lib/bloonix/etc/plugins
 CHECK_DIR=/usr/lib/bloonix/plugins
 install:
 	install -d \$(DESTDIR)\$(IMPORT_DIR) \$(DESTDIR)\$(CHECK_DIR) \$(DESTDIR)\$(PLUGIN_DIR)
-	bloonix-create-plugin plugin-$arg > \$(DESTDIR)\$(IMPORT_DIR)/plugin-$arg
 	install ./plugin-$arg \$(DESTDIR)\$(PLUGIN_DIR)
+	install ./check-$arg \$(DESTDIR)\$(PLUGIN_DIR)
 	install ./check-$arg \$(DESTDIR)\$(CHECK_DIR)
 	chmod 755 \$(DESTDIR)\$(CHECK_DIR)/check-$arg
+	chmod 644 \$(DESTDIR)\$(PLUGIN_DIR)/plugin-$arg
 EOF
 
         cd "/tmp/$package"
@@ -65,7 +66,6 @@ EOF
 
         # Update debian/control
         sed -i -e 's/^Architecture: .*/Architecture: all/' ./debian/control
-        sed -i -e 's/^Build-Depends: /Build-Depends: bloonix-plugin-config, /' ./debian/control
         sed -i -e 's|^Homepage: .*|Homepage: https://satellitesharing.org|' ./debian/control
         sed -i -e 's|^#Vcs-Git: .*|Vcs-Git: git://git@github.com:satellitesharing/bloonix-plugins-satellitesharing.git|' ./debian/control 
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
@@ -73,14 +73,15 @@ EOF
 
         # Update the webgui database with the plugin's details on installation
         # when installed on a webgui system.
-        sed -i -e "s|\sconfigure)| configure)\n\tif [[ -f /usr/bin/bloonix-load-plugins ]]; then bloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satsharing/plugin-$arg; fi|" ./debian/postinst.ex
+        sed -i -e "s|\sconfigure)| configure)\n\tif test -f /usr/bin/bloonix-create-plugin; then bloonix-create-plugin /usr/lib/bloonix/etc/plugins/plugin-$arg > /usr/lib/bloonix/etc/plugins/import/satellitesharing/plugin-$arg; fi\n\tif test -f /usr/bin/bloonix-load-plugins; then bloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satellitesharing/plugin-$arg; fi\n\trm /usr/lib/bloonix/etc/plugins/check-$arg|" ./debian/postinst.ex
         mv ./debian/postinst.ex ./debian/postinst
 
         # - Update the debian/copyright.
         # - Create the cron file if the plugin has a cron job.
 
-        # - Create the deb.
-        DESTDIR=$PWD dpkg-buildpackage
+        # - Create the deb. Change DEBFULLNAME and DEBEMAIL to whomever should
+        #   be the maintainer.
+        DEBFULLNAME="Ebow Halm" DEBEMAIL="ejh@cpan.org" DESTDIR=$PWD dpkg-buildpackage
         cp "../${package}_$version-1_all.deb" ../../$DEB_DIR/
         cp "../${package}_$version-1.dsc" ../../$DEB_DIR/
     else
