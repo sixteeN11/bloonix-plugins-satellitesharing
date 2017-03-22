@@ -1,9 +1,13 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-#
-# Plugin names cannot have spaces in them so no need to handle arguments that
-# are strings with spaces.
+# 
+# Author     : Ebow Halm <ejh@cpan.org>
+# Created    : Feb 2017
+# Description: Create debian packages of bloonix plugins in this repo.
+# Usage      : ./gen-debs.sh <name> # Generate package for the <name> plugin.
+#              ./gen-debs.sh # No arguments generates packages for all plugins
+#              ./gen-debs.sh <name1> <name2> # Generate package for listed plugins
 #
 #------------------------------------------------------------------------------
 
@@ -17,7 +21,15 @@
 # First GPG key id
 # DEB_SIGN_KEYID=$(gpg --list-keys | grep '^pub' | head -1 | awk  '{print $2}' | awk -F '/' '{print $2}')
 
-START_DIR=$(pwd)
+# If no plugins specified, do for all plugins in repo.
+if [ $# -eq 0 ]; then
+    files=$(ls checks/check-*)
+    for file in $files; do
+        set -- "$@" ${file#checks/check-}
+    done
+fi
+
+START_DIR=$PWD
 for arg in "$@"
 do
     cd $START_DIR
@@ -80,19 +92,15 @@ EOF
         sed -i -e 's|^#Vcs-Git: .*|Vcs-Git: git://git@github.com:satellitesharing/bloonix-plugins-satellitesharing.git|' ./debian/control 
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
         sed -i -e "s|^Description: .*|Description: $description|" ./debian/control
+        sed -i -e "s|^Section: .*|Section: net|" ./debian/control
+        sed -i -e "s|^Priority: .*|Priority: extra|" ./debian/control
 
         # Update the webgui database with the plugin's details on installation
         # when installed on a webgui system.
         sed -i -e "s|\sconfigure)| configure)\n\tif test -f /usr/bin/bloonix-create-plugin; then bloonix-create-plugin /usr/lib/bloonix/etc/plugins/plugin-$arg > /usr/lib/bloonix/etc/plugins/import/satellitesharing/plugin-$arg; fi\n\tif test -f /usr/bin/bloonix-load-plugins; then bloonix-load-plugins --plugin /usr/lib/bloonix/etc/plugins/import/satellitesharing/plugin-$arg; fi\n\trm /usr/lib/bloonix/etc/plugins/check-$arg|" ./debian/postinst.ex
         mv ./debian/postinst.ex ./debian/postinst
 
-        # - Update the debian/copyright.
-        # - Create the cron file if the plugin has a cron job.
-
-        # - Create the debian package.
-        #   -vversion
-        #   -Cchanges-description
-
+        # Create the debian package.
         DESTDIR=$PWD dpkg-buildpackage
 
         # Sign the debian package.
