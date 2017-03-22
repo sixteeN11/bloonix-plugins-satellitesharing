@@ -16,7 +16,7 @@ use JSON;
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.3' );
+my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
 $plugin->add_option(
     name        => 'uWSGI Stats Server',
