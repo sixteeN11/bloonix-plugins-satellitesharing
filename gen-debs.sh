@@ -80,8 +80,12 @@ EOF
         # - Update the debian/copyright.
         # - Create the cron file if the plugin has a cron job.
 
-        # - Create the deb.
+        # - Create the debian package.
         DESTDIR=$PWD dpkg-buildpackage
+
+        # Sign the debian package.
+        dpkg-sig --sign builder "../${package}_$version-1_all.deb"
+
         cp "../${package}_$version-1_all.deb" ../../$DEB_DIR/
         cp "../${package}_$version-1.dsc" ../../$DEB_DIR/
     else
