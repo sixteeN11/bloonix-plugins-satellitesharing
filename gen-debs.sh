@@ -7,6 +7,16 @@
 #
 #------------------------------------------------------------------------------
 
+# Require the maintainer name and email address to be specified via 
+# environment variables, and also require the GPG key id to be specified.
+
+: "${DEB_SIGN_KEYID:?Must set DEB_SIGN_KEYID, the GPG key id to sign packages with}"
+: "${DEBFULLNAME:?Must set DEBFULLNAME, the maintainer's name}"
+: "${DEBEMAIL:?Must set DEBEMAIL, the maintainer's email address}"
+
+# First GPG key id
+# DEB_SIGN_KEYID=$(gpg --list-keys | grep '^pub' | head -1 | awk  '{print $2}' | awk -F '/' '{print $2}')
+
 START_DIR=$(pwd)
 for arg in "$@"
 do
@@ -62,8 +72,7 @@ EOF
         cd "$BUILD_DIR"
         tar xzf "$package-$version.tar.gz"
         cd "$package-$version"
-        # Set DEBFULLNAME and DEBEMAIL to maintainer
-        DEBFULLNAME="Ebow Halm" DEBEMAIL='ejh@cpan.org' dh_make --single --yes --copyright Apache -f "../$package-$version.tar.gz"
+        dh_make --single --yes --copyright Apache -f "../$package-$version.tar.gz"
 
         # Update debian/control
         sed -i -e 's/^Architecture: .*/Architecture: all/' ./debian/control
@@ -81,6 +90,9 @@ EOF
         # - Create the cron file if the plugin has a cron job.
 
         # - Create the debian package.
+        #   -vversion
+        #   -Cchanges-description
+
         DESTDIR=$PWD dpkg-buildpackage
 
         # Sign the debian package.
@@ -88,6 +100,8 @@ EOF
 
         cp "../${package}_$version-1_all.deb" ../../$DEB_DIR/
         cp "../${package}_$version-1.dsc" ../../$DEB_DIR/
+        cp "../${package}_$version-1.debian.tar.xz" ../../$DEB_DIR/
+        cp "../${package}_$version.orig.tar.gz" ../../$DEB_DIR/
     else
         echo "  Ignoring: $arg";
     fi

@@ -15,9 +15,24 @@ directories of this repository. To generate the debian package for a
 plugin named `<name>` (ie `plugins/plugin-<name>` and `checks/check-<name>` 
 files exist in this repo) you would run:
 
-`./gen-debs.sh <name>`
+The following environment variables must be specified before running
+gen-debs.sh
 
-### Example: generate .debs for all the packages in the repository.
+DEB_SIGN_KEYID  This is the GPG key id to be used to sign the packages
+DEBFULLNAME     This is the maintainer's full name
+DEBEMAIL        This is the maintainer's email address
 
-`./gen-debs.sh  asn aws-instance docker du php-fpm saltmaster-minions shorewall ssllabs uwsgi varnish4`
+#### Generate deb for a single package named asn.
 
+`DEB_SIGN_KEYID=8530BEEF DEBFULLNAME="Ebow Halm" DEBEMAIL=ejh@cpan.org ./gen-debs.sh asn`
+
+#### Generate debs for a list of packages.
+
+`DEB_SIGN_KEYID=8530BEEF DEBFULLNAME="Ebow Halm" DEBEMAIL=ejh@cpan.org ./gen-debs.sh asn docker du`
+
+#### Generate debs for all packages in this repository.
+
+Passing no arguments let's it search for all plugins in the repository
+and generate a debian package for each.
+
+`DEB_SIGN_KEYID=8530BEEF DEBFULLNAME="Ebow Halm" DEBEMAIL=ejh@cpan.org ./gen-debs.sh`
