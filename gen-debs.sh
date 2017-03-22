@@ -62,7 +62,8 @@ EOF
         cd "$BUILD_DIR"
         tar xzf "$package-$version.tar.gz"
         cd "$package-$version"
-        dh_make --single --yes --copyright Apache -f "../$package-$version.tar.gz"
+        # Set DEBFULLNAME and DEBEMAIL to maintainer
+        DEBFULLNAME="Ebow Halm" DEBEMAIL='ejh@cpan.org' dh_make --single --yes --copyright Apache -f "../$package-$version.tar.gz"
 
         # Update debian/control
         sed -i -e 's/^Architecture: .*/Architecture: all/' ./debian/control
@@ -79,9 +80,8 @@ EOF
         # - Update the debian/copyright.
         # - Create the cron file if the plugin has a cron job.
 
-        # - Create the deb. Change DEBFULLNAME and DEBEMAIL to whomever should
-        #   be the maintainer.
-        DEBFULLNAME="Ebow Halm" DEBEMAIL="ejh@cpan.org" DESTDIR=$PWD dpkg-buildpackage
+        # - Create the deb.
+        DESTDIR=$PWD dpkg-buildpackage
         cp "../${package}_$version-1_all.deb" ../../$DEB_DIR/
         cp "../${package}_$version-1.dsc" ../../$DEB_DIR/
     else
