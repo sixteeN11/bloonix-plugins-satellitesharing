@@ -3,9 +3,10 @@
 Additional plugins for the Bloonix monitoring system
 
 
-## Plugin ID Range
+## Debian and Ubuntu Repositories
 
-Note that we are claiming the plugin ID range 3.000.000 to 3.010.000
+The plugins are available for Debian Systems at [apt.satellitesharing.org](https://apt.satellitesharing.org/). Follow the link to see setup instructions.
+
 
 ## Generating bloonix plugin debian packages
 
@@ -40,3 +41,7 @@ Passing no arguments let's it search for all plugins in the repository
 and generate a debian package for each.
 
 `DEB_SIGN_KEYID=8530BEEF DEBFULLNAME="Ebow Halm" DEBEMAIL=ejh@cpan.org ./gen-debs.sh`
+
+## Satellitesharing Bloonix Plugin ID Range
+
+Please note that we are [claiming the plugin ID range 3.000.000 to 3.010.000](https://forum.bloonix.org/index.php/Thread/436-Claim-your-plugin-ID-Range/)
