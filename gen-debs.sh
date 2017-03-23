@@ -91,6 +91,7 @@ EOF
         sed -i -e 's|^Homepage: .*|Homepage: https://satellitesharing.org|' ./debian/control
         sed -i -e 's|^#Vcs-Git: .*|Vcs-Git: git://git@github.com:satellitesharing/bloonix-plugins-satellitesharing.git|' ./debian/control 
         sed -i -e 's|^#Vcs-Browser: .*|Vcs-Browser: https://github.com/satellitesharing/bloonix-plugins-satellitesharing|' ./debian/control
+        sed -i -e 's|^Depends: .*|Depends: bloonix-core|' ./debian/control
         sed -i -e "s|^Description: .*|Description: $description|" ./debian/control
         sed -i -e "s|^Section: .*|Section: net|" ./debian/control
         sed -i -e "s|^Priority: .*|Priority: extra|" ./debian/control
