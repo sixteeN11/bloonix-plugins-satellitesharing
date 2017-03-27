@@ -1,284 +1,418 @@
-{
-   "chart" : [
-      {
-         "id" : "1",
-         "options" : {
-            "chart-type" : "area",
-            "units" : "null",
-            "ylabel" : "exit code",
-            "series" : [
-               {
-                  "name" : "exit_code",
-                  "color" : "#005479"
-               },
-               {
-                   "name" : "real_time",
-                   "color" : "#045479"
-               }
-            ],
-         },
-         "title" : "The Exit code of the cronjob"
-      }
-   ],
-   "plugin" : {
-      "info" : {
-         "flags" : "",
-         "examples" : [
-            {
-               "description" : [
-                  "Define a cronjob status file path and set warning and critical thresholds for the results from /usr/bin/time.",
-                  "",
-                  "- Set status to warning if real_time is higher than 60 seconds",
-                  "- Set status to critical if exit status is greater than 0"
-               ],
-               "command_line" : "check-cronjob --statusfile /var/lib/bloonix/agent/cronjob/root/bloonix_update_agent_host_config --warning 'real_time:gt:60' --critical 'exit_code:gt:0'",
-               "arguments" : [
-                  "warning",
-                  "real_time:gt:60",
-                  "critical",
-                  "exit_code:gt:0"
-               ]
-            }
-         ],
-         "plugin" : "check-cronjob",
-         "version" : "0.1",
-         "options" : [
-            {
-               "description": "This is the file name of the cronjob status file to check.",
-               "mandatory": 1,
-               "option": "statusfile",
-               "default": "/var/lib/bloonix/agent/cronjob/root/identifier",
-               "multiple": 0,
-               "name": "Filename",
-               "value_type": "string",
-               "value_desc": "statusfile"
-            },
-            {
-               "option" : "warning",
-               "name" : "Warning threshold",
-               "default" : 0,
-               "mandatory" : 0,
-               "description" : "This is the warning threshold. When the value exceeds the threshold a warning status is triggered. Please see the examples for more information.",
-               "value_type" : "number",
-               "multiple" : 1,
-               "value_desc" : "warning threshold"
-            },
-            {
-               "multiple" : 1,
-               "value_desc" : "critical threshold",
-               "description" : "This is the critical threshold. When the value exceeds the threshold a warning status is triggered. Please see the examples for more information.",
-               "mandatory" : 0,
-               "value_type" : "number",
-               "name" : "Critical threshold",
-               "default" : 0,
-               "option" : "critical"
-            }
-         ],
-         "thresholds" : {
-            "info" : [
-               "How to set warning and critical thresholds:\n\n",
-               "  It's possible to set thresholds for one or more statistic keys.\n",
-               "  The format to add a threshold for a statistic key is:\n\n",
-               "    key:operator:threshold\n\n",
-               "  If no operator is set then the default operator is 'ge'.\n\n",
-               "  The following operators are available:\n\n",
-               "    lt = less than\n",
-               "    le = less than or equal\n",
-               "    gt = greater than\n",
-               "    ge = greater than or equal\n",
-               "    eq = equal\n",
-               "    ne = not equal\n"
-            ],
-            "options" : [
-               {
-                  "key": "start_time",
-                  "unit": "none"
-               },
-               {
-                  "key": "real_time",
-                  "unit": "none"
-               },
-               {
-                  "key": "user_time",
-                  "unit": "none"
-               },
-               {
-                  "key": "system_time",
-                  "unit": "none"
-               },
-               {
-                  "key": "file_ctime",
-                  "unit": "none"
-               },
-               {
-                  "key": "reads",
-                  "unit": "none"
-               },
-               {
-                  "key": "writes",
-                  "unit": "none"
-               },
-               {
-                  "key": "max_res_kbytes",
-                  "unit": "none"
-               },
-               {
-                  "key": "avg_mem_kbytes",
-                  "unit": "none"
-               },
-               {
-                  "key": "exit_code",
-                  "unit": "none"
-               },
-               {
-                  "key": "invol_context_switches",
-                  "unit": "none"
-               },
-               {
-                  "key": "vol_context_switches",
-                  "unit": "none"
-               }
-            ]
-         }
-      },
-      "id" : "10050",
-      "abstract" : "Linux cronjob check",
-      "netaccess" : "no",
-      "command" : "check-cronjob",
-      "plugin" : "Check.Cronjob",
-      "datatype" : "statistic",
-      "category" : "Linux",
-      "prefer" : "localhost",
-      "description" : "Get statistics and exit code for a cronjob."
-   },
-   "statistic" : [
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "unshared_size",
-         "alias" : "",
-         "description" : "."
-      },
+plugin {
+    id 3000011
+    abstract Linux cronjob check
+    netaccess no
+    command check-cronjob
+    plugin Check.Cronjob
+    datatype statistic
+    category Linux
+    prefer localhost
+    description Get statistics and exit code for a cronjob.
+}
 
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "major_page_fault",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "avg_mem_kbytes",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "max_res_kbytes",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "system_page_size",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "units" : "bytes",
-         "statkey" : "avg_res_size",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "units" : "percent",
-         "statkey" : "cpu_percent",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "system_time",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "user_time",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "real_time",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "reads",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "writes",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "minor_page_fault",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "swap_num",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "invol_context_switches",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "signal_number",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "sock_msg_rec",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "sock_msg_send",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "vol_context_switches",
-         "alias" : "",
-         "description" : "."
-      },
-      {
-         "datatype" : "bigint"
-         "statkey" : "exit_code",
-         "alias" : "",
-         "description" : "."
-      }
-   ]
+statistic {
+    datatype bigint
+    statkey cron_interval
+    stattype gauge
+    description cron_interval
+}
+
+statistic {
+    datatype bigint
+    statkey unshared_size
+    units bytes
+    stattype gauge
+    description unshared_size
+}
+
+statistic {
+    datatype bigint
+    statkey major_page_fault
+    units bytes
+    stattype gauge
+    description major_page_fault
+}
+
+statistic {
+    datatype bigint
+    statkey avg_mem_kbytes
+    units bytes
+    stattype gauge
+    description avg_mem_kbytes
+}
+
+statistic {
+    datatype bigint
+    statkey max_res_kbytes
+    units bytes
+    stattype gauge
+    description max_res_kbytes
+}
+
+statistic {
+    datatype bigint
+    statkey system_page_size
+    units bytes
+    stattype gauge
+    description system_page_size
+}
+
+statistic {
+    datatype bigint
+    statkey avg_res_size
+    units bytes
+    stattype gauge
+    description avg_res_size
+}
+
+statistic {
+    datatype bigint
+    statkey cpu_percent
+    units percent
+    stattype gauge
+    description cpu_percent
+}
+
+statistic {
+    datatype bigint
+    statkey system_time
+    stattype gauge
+    description system_time
+}
+
+statistic {
+    datatype bigint
+    statkey user_time
+    stattype gauge
+    description user_time
+}
+
+statistic {
+    datatype bigint
+    statkey real_time
+    stattype gauge
+    description real_time
+}
+
+statistic {
+    datatype bigint
+    statkey reads
+    stattype gauge
+    description reads
+}
+
+statistic {
+    datatype bigint
+    statkey writes
+    stattype gauge
+    description writes
+}
+
+statistic {
+    datatype bigint
+    statkey minor_page_fault
+    stattype gauge
+    description minor_page_fault
+}
+
+statistic {
+    datatype bigint
+    statkey swap_num
+    stattype gauge
+    description swap_num
+}
+
+statistic {
+    datatype bigint
+    statkey invol_context_switches
+    stattype gauge
+    description invol_context_switches
+}
+
+statistic {
+    datatype bigint
+    statkey signal_number
+    stattype gauge
+    description signal_number
+}
+
+statistic {
+    datatype bigint
+    statkey sock_msg_rec
+    stattype gauge
+    description sock_msg_rec
+}
+
+statistic {
+    datatype bigint
+    statkey sock_msg_send
+    stattype gauge
+    description sock_msg_send
+}
+
+statistic {
+    datatype bigint
+    statkey vol_context_switches
+    stattype gauge
+    description vol_context_switches
+}
+
+statistic {
+    datatype smallint
+    statkey exit_code
+    stattype gauge
+    description exit_code
+}
+
+chart {
+    id 1
+   title Time elapsed between cron jobs runs
+    options {
+        ylabel minutes
+        chart-type area
+        series {
+            name cron_interval
+            color\#005467
+        }
+    }
+}
+chart {
+    id 2
+   title unshared_size
+    options {
+        ylabel unshared_size
+        chart-type area
+        series {
+            name unshared_size
+            color\#005467
+        }
+    }
+}
+chart {
+    id 3
+   title major_page_fault
+    options {
+        ylabel major_page_fault
+        chart-type area
+        series {
+            name major_page_fault
+            color\#005467
+        }
+    }
+}
+chart {
+    id 4
+   title avg_mem_kbytes
+    options {
+        ylabel avg_mem_kbytes
+        chart-type area
+        series {
+            name avg_mem_kbytes
+            color\#005467
+        }
+    }
+}
+chart {
+    id 5
+   title max_res_kbytes
+    options {
+        ylabel max_res_kbytes
+        chart-type area
+        series {
+            name max_res_kbytes
+            color\#005467
+        }
+    }
+}
+chart {
+    id 6
+   title system_page_size
+    options {
+        ylabel system_page_size
+        chart-type area
+        series {
+            name system_page_size
+            color\#005467
+        }
+    }
+}
+chart {
+    id 7
+   title avg_res_size
+    options {
+        ylabel avg_res_size
+        chart-type area
+        series {
+            name avg_res_size
+            color\#005467
+        }
+    }
+}
+chart {
+    id 8
+   title cpu_percent
+    options {
+        ylabel cpu_percent
+        chart-type area
+        series {
+            name cpu_percent
+            color\#005467
+        }
+    }
+}
+chart {
+    id 9
+   title system_time
+    options {
+        ylabel system_time
+        chart-type area
+        series {
+            name system_time
+            color\#005467
+        }
+    }
+}
+chart {
+    id 10
+   title user_time
+    options {
+        ylabel user_time
+        chart-type area
+        series {
+            name user_time
+            color\#005467
+        }
+    }
+}
+chart {
+    id 11
+   title real_time
+    options {
+        ylabel real_time
+        chart-type area
+        series {
+            name real_time
+            color\#005467
+        }
+    }
+}
+chart {
+    id 12
+   title reads
+    options {
+        ylabel reads
+        chart-type area
+        series {
+            name reads
+            color\#005467
+        }
+    }
+}
+chart {
+    id 13
+   title writes
+    options {
+        ylabel writes
+        chart-type area
+        series {
+            name writes
+            color\#005467
+        }
+    }
+}
+chart {
+    id 14
+   title minor_page_fault
+    options {
+        ylabel minor_page_fault
+        chart-type area
+        series {
+            name minor_page_fault
+            color\#005467
+        }
+    }
+}
+chart {
+    id 15
+   title swap_num
+    options {
+        ylabel swap_num
+        chart-type area
+        series {
+            name swap_num
+            color\#005467
+        }
+    }
+}
+chart {
+    id 16
+   title invol_context_switches
+    options {
+        ylabel invol_context_switches
+        chart-type area
+        series {
+            name invol_context_switches
+            color\#005467
+        }
+    }
+}
+chart {
+    id 17
+   title signal_number
+    options {
+        ylabel signal_number
+        chart-type area
+        series {
+            name signal_number
+            color\#005467
+        }
+    }
+}
+chart {
+    id 18
+   title sock_msg_rec
+    options {
+        ylabel sock_msg_rec
+        chart-type area
+        series {
+            name sock_msg_rec
+            color\#005467
+        }
+    }
+}
+chart {
+    id 19
+   title sock_msg_send
+    options {
+        ylabel sock_msg_send
+        chart-type area
+        series {
+            name sock_msg_send
+            color\#005467
+        }
+    }
+}
+chart {
+    id 20
+   title vol_context_switches
+    options {
+        ylabel vol_context_switches
+        chart-type area
+        series {
+            name vol_context_switches
+            color\#005467
+        }
+    }
+}
+chart {
+    id 21
+   title exit_code
+    options {
+        ylabel exit_code
+        chart-type area
+        series {
+            name exit_code
+            color\#005467
+        }
+    }
 }
