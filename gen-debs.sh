@@ -37,6 +37,7 @@ do
     check="./checks/check-$arg";
     plugin="./plugins/plugin-$arg";
 
+
     if [[ -f "$check" && -f "$plugin" ]]
     then
 
@@ -51,18 +52,26 @@ do
         cp "$check" "$stage/";
         cp "$plugin" "$stage/";
 
+        if [[ -f "./cronjobs/cron-$arg" ]]
+        then
+            cp "./cronjobs/cron-$arg" "$stage/";
+            CRON_DIR="\$(DESTDIR)/usr/lib/bloonix/etc/cron"
+            INSTALL_CRON_CMD="	install ./cron-$arg $CRON_DIR"
+        fi
+
         # echo -e and use \t for tab
         cat >"$stage/Makefile" <<EOF
 IMPORT_DIR=/usr/lib/bloonix/etc/plugins/import/satellitesharing
 PLUGIN_DIR=/usr/lib/bloonix/etc/plugins
 CHECK_DIR=/usr/lib/bloonix/plugins
 install:
-	install -d \$(DESTDIR)\$(IMPORT_DIR) \$(DESTDIR)\$(CHECK_DIR) \$(DESTDIR)\$(PLUGIN_DIR)
+	install -d \$(DESTDIR)\$(IMPORT_DIR) \$(DESTDIR)\$(CHECK_DIR) \$(DESTDIR)\$(PLUGIN_DIR) $CRON_DIR
 	install ./plugin-$arg \$(DESTDIR)\$(PLUGIN_DIR)
 	install ./check-$arg \$(DESTDIR)\$(PLUGIN_DIR)
 	install ./check-$arg \$(DESTDIR)\$(CHECK_DIR)
 	chmod 755 \$(DESTDIR)\$(CHECK_DIR)/check-$arg
 	chmod 644 \$(DESTDIR)\$(PLUGIN_DIR)/plugin-$arg
+$INSTALL_CRON_CMD
 EOF
 
         cd "/tmp/$package"
