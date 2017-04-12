@@ -21,6 +21,7 @@ use Bloonix::IPC::Cmd;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
+$plugin->has_timeout(default => 10);
 $plugin->add_option(
     name        => "Expected ASN",
     option      => "asn",
@@ -41,6 +42,7 @@ $plugin->example(
 );
 
 my $opt = $plugin->parse_options;
+$opt->{timeout} ||= 0;
 
 #------------------------------------------------------------------------------
 
@@ -80,8 +82,21 @@ my $cmd
     . '$(dig +short myip.opendns.com @resolver1.opendns.com) '
     . '| awk \'FNR==2{print $1}\'';
 
+
 my $asn;
-eval { chomp( $asn = `$cmd` ); };
+eval { 
+    local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
+    alarm $opt->{timeout};
+    chomp( $asn = `$cmd` ); 
+    alarm(0);
+};
+if ($@) {
+    $plugin->exit(
+        status  => 'CRITICAL',
+        message => $@ eq "alarm\n" ? 
+            "Timed out after $opt->{timeout} seconds." : $@
+    );
+} 
 
 if ( $? == -1 ) {
     $plugin->exit(
