@@ -3,7 +3,7 @@ plugin {
     plugin ASN.Check
     command check-asn
     datatype statistic
-    category Network,ASN
+    category Network
     netaccess yes
     worldwide yes
     prefer localhost
