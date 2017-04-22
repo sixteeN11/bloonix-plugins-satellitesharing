@@ -3,11 +3,9 @@
 # Check the size of a directory and write the output to a file for bloonix-agent
 
 
-target_dir="$1"
-target_dir_filenamed="$(echo $target_dir | sed -e 's@^/@@g' -e 's@/@_@g' )"
-result_file="/var/lib/bloonix/agent/du_result/${target_dir_filenamed}.json"
-mkdir -p /var/lib/bloonix/agent/du_result
-
+target_dir="$2"
+result_file="/var/cache/bloonix/du_${1}.txt"
+mkdir -p /var/cache/bloonix
 
 if [[ -z $target_dir ]]; then
     echo "Please specify the full path to the directory to check, aborting!"

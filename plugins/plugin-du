@@ -1,13 +1,13 @@
 plugin {
     id 3000004
-    plugin du.Check
+    plugin DirectorySize.Check
     command check-du
     datatype statistic
-    category System
+    category System,Disk,Filesystem
     netaccess no
     prefer localhost
     description Directory size and inode count check.
-    abstract Read the size and inode count of a directory from a cronjob results file.
+    abstract Checks the size and inode count of a directory.
 }
 
 statistic {
