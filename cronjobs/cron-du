@@ -1,23 +1,38 @@
 #!/bin/bash
-#
+
 # Check the size of a directory and write the output to a file for bloonix-agent
 
+CHECK=du
+LOG_DIR=/var/cache/bloonix
+ERROR_LOG=$LOG_DIR/$CHECK.err.log
 
-target_dir="$2"
-result_file="/var/cache/bloonix/du_${1}.txt"
-mkdir -p /var/cache/bloonix
+[ -d $LOG_DIR ] || mkdir -p $LOG_DIR
 
-if [[ -z $target_dir ]]; then
-    echo "Please specify the full path to the directory to check, aborting!"
-    exit 1
+# Two arguments are required: 
+# 1. The identifier for this directory check.
+# 2. The directory to check.
+
+if [ $# -ne 2 ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $0 called with $# instead of 2 (identifier and directory) arguments!" > $ERROR_LOG
+    exit 1;
 fi
 
+DIR_TO_CHECK="$2"
+if [ ! -d $DIR_TO_CHECK ]; then
+    echo "$DIR_TO_CHECK is not a directory or does not exist!" > $ERROR_LOG;
+    exit 1;
+fi
 
-dir_size_bytes="$(du -sx $target_dir 2>/dev/null | awk '{print $1}')"
-dir_inodes="$(find $target_dir | wc -l 2>/dev/null)"
+IDENTIFIER="$1"
+RESULTS="$LOG_DIR/${CHECK}_$IDENTIFIER.txt"
+SCRATCH=$(mktemp --tmpdir=$LOG_DIR -t .tmp.$CHECK.XXXXXXXXXX)
 
+# Cleanup even when interrupted; leave no temp files behind.
+function finish {
+    rm "$SCRATCH" 2>/dev/null
+}
 
 echo "{
-  size: $dir_size_bytes,
-  inodes: $dir_inodes
-}" > "$result_file"
+    size: $(du -sx $DIR_TO_CHECK 2>/dev/null | awk '{print $1}'),
+    inodes: $(find $DIR_TO_CHECK | wc -l 2>/dev/null)
+}" > "$SCRATCH" && mv "$SCRATCH" "$RESULTS" && rm "$ERROR_LOG" 2>/dev/null
