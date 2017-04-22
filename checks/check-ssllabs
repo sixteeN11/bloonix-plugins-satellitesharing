@@ -26,14 +26,14 @@ $plugin->info(
         "For the cron script to work, you must install the ssllabs-scan",
         "utility from https://github.com/ssllabs/ssllabs-scan on the machine",
         "that runs the agent that has to execute the cronjob.",
-        "To setup this plugin to check the domain 'blunix.de'",
+        "To setup this plugin to check the domain 'blunix.com'",
         "for example",
-        "enter 'blunix.de' as the value of the domain input under",
+        "enter 'blunix.com' as the value of the domain input under",
         "Check settings.",
-        "Then create a cronjob that has 'blunix.de' passed",
+        "Then create a cronjob that has 'blunix.com' passed",
         "to the cron script '/usr/lib/bloonix/etc/cron/cron-ssllabs' like this: ",
-        "* */5 * * * /usr/lib/bloonix/etc/cron/cron-ssllabs blunix.de",
-        "Note that a file named /var/cache/bloonix/ssllabs_blunix.de.json",
+        "* */5 * * * /usr/lib/bloonix/etc/cron/cron-ssllabs blunix.com",
+        "Note that a file named /var/cache/bloonix/ssllabs_blunix.com.json",
         "will be created by the cron job and will be read by the agent",
     )
 );
@@ -58,9 +58,9 @@ $plugin->add_option(
 );
 
 $plugin->example(
-    description => "Warn when blunix.de's SSLLabs scan grade is worse than A",
+    description => "Warn when blunix.com's SSLLabs scan grade is worse than A",
     arguments   => [
-        domain  => 'blunix.de',
+        domain  => 'blunix.com',
         grade => 'A'
     ]
 );
