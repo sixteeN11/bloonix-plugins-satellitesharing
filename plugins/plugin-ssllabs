@@ -6,6 +6,6 @@ plugin {
     category System
     netaccess yes
     prefer localhost
-    description Read out an ssllabs-scan results file.
-    abstract Read out the results of a ssllabs-scan run via a cronjob.
+    description Give domain an SSL grade
+    abstract Checks and gives a domain an SSL grade.
 }

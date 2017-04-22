@@ -6,12 +6,12 @@ ssllabs_executable="/usr/local/sbin/ssllabs-scan"
 
 target_url="$1"
 target_url_filenamed="$(echo $target_url | sed -e 's@^http://@@g' -e 's@https://@@g' -e 's@/$@@g' -e 's@/@_@g' )"
-result_file="/var/lib/bloonix/agent/ssllabs_result/${target_url_filenamed}.txt"
+result_file="/var/cache/bloonix/ssllabs_${target_url_filenamed}.json"
 
-mkdir -p /var/lib/bloonix/agent/ssllabs_result
+mkdir -p /var/cache/bloonix
 
 
-if [[ -z $target_dir ]]; then
+if [[ -z $target_url ]]; then
     echo "Please specify the full URL to check (https://www.example.com), aborting!"
     exit 1
 fi
