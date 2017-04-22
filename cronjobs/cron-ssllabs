@@ -1,19 +1,34 @@
 #!/bin/bash
-#
+
 # Use and run https://github.com/ssllabs/ssllabs-scan and save the results to a file
 
-ssllabs_executable="/usr/local/sbin/ssllabs-scan"
+CHECK=ssllabs
+LOG_DIR=/var/cache/bloonix
+ERROR_LOG=$LOG_DIR/$CHECK.err.log
 
-target_url="$1"
-target_url_filenamed="$(echo $target_url | sed -e 's@^http://@@g' -e 's@https://@@g' -e 's@/$@@g' -e 's@/@_@g' )"
-result_file="/var/cache/bloonix/ssllabs_${target_url_filenamed}.json"
+[ -d $LOG_DIR ] || mkdir -p $LOG_DIR
 
-mkdir -p /var/cache/bloonix
+# host is required, report the error to a generic error file.
+if [ $# -eq 0 ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $0 called with NO arguments!" > $ERROR_LOG
+    exit 1;
+fi
 
-
-if [[ -z $target_url ]]; then
-    echo "Please specify the full URL to check (https://www.example.com), aborting!"
+#cmd=$(which echo)              # Testing rest of code without ssllabs-scan
+cmd=$(which ssllabs-scan)
+if [[ -z $cmd ]]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') Cannot find 'ssllabs-scan' command!" > $ERROR_LOG
     exit 1
 fi
 
-$ssllabs_executable "$target_url" > "$result_file"
+HOST="$1"
+RESULTS="$LOG_DIR/${CHECK}_$HOST.json"
+SCRATCH=$(mktemp --tmpdir=$LOG_DIR -t .tmp.$CHECK.XXXXXXXXXX)
+
+# Cleanup even when interrupted; leave no temp files behind.
+function finish {
+    rm "$SCRATCH" 2>/dev/null
+}
+trap finish EXIT
+
+$cmd "$HOST" > "$SCRATCH" && mv "$SCRATCH" "$RESULTS" && rm "$ERROR_LOG" 2>/dev/null
