@@ -16,21 +16,41 @@ use JSON;
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.4' );
+my $plugin = Bloonix::Plugin->new( version => '0.5' );
+$plugin->info(
+    join( " ",
+        "This plugin checks a domain and gives it an SSL grade.",
+        "To do this, it requires a cron job to be run.",
+        "The script the cron job should run has been installed to: ",
+        "'/usr/lib/bloonix/etc/cron/cron-ssllabs'.",
+        "For the cron script to work, you must install the ssllabs-scan",
+        "utility from https://github.com/ssllabs/ssllabs-scan on the machine",
+        "that runs the agent that has to execute the cronjob.",
+        "To setup this plugin to check the domain 'blunix.de'",
+        "for example",
+        "enter 'blunix.de' as the value of the domain input under",
+        "Check settings.",
+        "Then create a cronjob that has 'blunix.de' passed",
+        "to the cron script '/usr/lib/bloonix/etc/cron/cron-ssllabs' like this: ",
+        "* */5 * * * /usr/lib/bloonix/etc/cron/cron-ssllabs blunix.de",
+        "Note that a file named /var/cache/bloonix/ssllabs_blunix.de.json",
+        "will be created by the cron job and will be read by the agent",
+    )
+);
 
 $plugin->add_option(
-    name        => 'File',
-    option      => 'file',
-    description => 'File where JSON output of ssllabs result written',
+    name        => 'Domain',
+    option      => 'domain',
+    description => 'Domain to check with SSLLabs',
     value_type  => 'string',
-    example     => '/var/cache/bloonix/ssllabs_name-of-check.json',
+    example     => 'www.example.com',
     mandatory   => 1,
 );
 
 $plugin->add_option(
     name        => 'Grade',
     option      => 'grade',
-    description => 'Grade host should meet or beat',
+    description => 'Grade domain should meet or beat',
     value_type  => 'string',
     value       => 'A+|A|A-|B+|B|B-|C+|C|C-|D+|D|D-|E+|E|E-',
     regex       => qr/^[A-E][-+]?\z/,
@@ -40,7 +60,7 @@ $plugin->add_option(
 $plugin->example(
     description => "Warn when blunix.de's SSLLabs scan grade is worse than A",
     arguments   => [
-        file  => '/var/cache/bloonix/ssllabs_name-of-check.json',
+        domain  => 'blunix.de',
         grade => 'A'
     ]
 );
@@ -55,10 +75,11 @@ my $opt = $plugin->parse_options;
 # 2. Data format matches expectations (JSON with expected attributes).
 
 local $/;
-open( my $fh, "<", $opt->{file} )
+my $file = "/var/cache/bloonix/ssllabs_$opt->{domain}.json";
+open( my $fh, "<", $file )
     or $plugin->exit(
     status  => 'UNKNOWN',
-    message => "Cannot open $opt->{file}: $!."
+    message => "Cannot open $file: $!."
     );
 
 my $output = <$fh>;
@@ -69,7 +90,7 @@ eval { $results = decode_json $output; };
 if ($@) {
     $plugin->exit(
         status  => 'UNKNOWN',
-        message => "Invalid file format '$opt->{file}'.  Is not JSON."
+        message => "Invalid file format '$file'.  Is not JSON."
     );
 }
 
@@ -114,7 +135,7 @@ if ($grade) {
 
 $plugin->exit(
     status  => 'UNKNOWN',
-    message => " SSL results for '$opt->{host}' not found in results file . "
+    message => " SSL results for '$opt->{domain}' not found in results file . "
 );
 
 #------------------------------------------------------------------------------
