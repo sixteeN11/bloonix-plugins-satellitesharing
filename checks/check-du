@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 use Bloonix::Plugin;
+use File::Temp qw(:mktemp);
+use Date::Format qw(time2str);
 
 #------------------------------------------------------------------------------
 #
@@ -15,7 +17,7 @@ use Bloonix::Plugin;
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.5' );
+my $plugin = Bloonix::Plugin->new( version => '0.6' );
 $plugin->info(
     join( " ",
         "This plugin checks the size and inode count of a directory.",
@@ -59,8 +61,21 @@ my $opt = $plugin->parse_options;
 
 ###########     Verify basic pre-requisites are satisfied.         ############
 #
-# 1. File exists, is not empty, and its contents can be read.
-# 2. Data format matches expectations.
+# What is the status of the cron job run?
+#
+# - Have we processed the cron job's output before?
+# - Has the cron job run since the last time we processed its output?
+# - Did the last cron job run produce an error?
+#
+# - We've processed the cron job's output before if a .last_processed file
+#   exists (we create that file).
+# - An err.log file exists if the last run of the cron job produced an error.
+# - A $domain.json file exists if the last cron job run did not produce an
+#   error and we haven't processed those results.
+#
+# The cron job could be writing the error file our the output file as we read
+# it so do prevent the two processes from stomping on each other by doing it
+# atomically, rename the file to be read and then read the renamed file.
 #
 # File format is almost but not quite JSON; the attributes (inodes, size) are
 # not quoted. An example is:
@@ -70,42 +85,140 @@ my $opt = $plugin->parse_options;
 #   size: 47593
 # }
 
-local $/;
-my $file = "/var/cache/bloonix/du_$opt->{identifier}.txt";
-open( my $fh, "<", $file )
-    or $plugin->exit(
-    status  => 'UNKNOWN',
-    message => "Cannot open $file: $!."
-    );
+#------------------------------------------------------------------------------
 
-my $output = <$fh>;
-close($fh);
-my $stats;
+# 'Constants'
+my $CHECK          = 'du';
+my $LOG_DIR        = '/var/cache/bloonix';
+my $ERROR_LOG      = "$LOG_DIR/$CHECK.err.log";
+my $RESULT         = "$LOG_DIR/${CHECK}_$opt->{identifier}.txt";
+my $LAST_PROCESSED = "$RESULT.last_processed";
 
-while ( $output =~ /([a-z]++)\s*+:\s*+([0-9]++)/gcm ) {
-    $stats->{$1} = $2;
+#------------------------------------------------------------------------------
+
+my $results = check_cronjob_status( $ERROR_LOG, $RESULT, $LOG_DIR, $CHECK );
+process_results( $results, $LAST_PROCESSED );
+
+#------------------------------------------------------------------------------
+
+sub check_cronjob_status {
+
+    my ( $error_log, $results_file, $log_dir, $check ) = @_;
+
+    local $/;
+    my $tmp = mktemp("$log_dir/.tmp.$check.XXXXXXXXXX");
+
+    if ( rename $error_log, $tmp ) {
+
+        # An error occcurred during the last cron run.
+
+        if ( open( my $fh, "<", $tmp ) ) {
+
+            my $err = <$fh>;
+            chomp($err);
+
+            my $mtime;
+            (   undef, undef, undef, undef, undef,
+                undef, undef, undef, undef, $mtime,
+            ) = stat($fh);
+            close($fh);
+            unlink $tmp;
+
+            my $date = time2str( '%C', $mtime );
+            $plugin->exit(
+                status  => 'UNKNOWN',
+                message => "Cron job run on $date error: $err"
+            );
+
+        }
+
+        unlink $tmp;
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Error during last cron job run."
+        );
+
+    }
+
+    my $last_processed = "$results_file.last_processed";
+
+    # Has there been a cron job run that we haven't processed?
+    unless ( rename $results_file, $tmp ) {
+
+        # The cron job hasn't run (or hasn't run since the last time we
+        # processed it's output).
+
+       # If there is no cron job output to process (so no statistics to send),
+       # just report the last time the cron job run (ie the time of the last
+       # results we processed).
+
+        if ( -e $last_processed ) {
+            my $mtime;
+            (   undef, undef, undef, undef, undef,
+                undef, undef, undef, undef, $mtime,
+            ) = stat($last_processed);
+            my $date = time2str( '%C', $mtime );
+            $plugin->exit(
+                status  => 'OK',
+                message => "No new data. Cron job's last run ended at: $date."
+            );
+        }
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cron job has not been run."
+        );
+
+    }
+    $tmp;
 }
 
-unless ( exists $stats->{size} && exists $stats->{inodes} ) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => "$file must have 'size' and 'inodes' attributes."
+#------------------------------------------------------------------------------
+
+sub process_results {
+
+    my ( $file, $rename ) = @_;
+
+    my $fh;
+    unless ( open( $fh, "<", $file ) ) {
+        rename $file, $rename;
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cannot open $file: $!."
+        );
+    }
+
+    local $/;
+    my $output = <$fh>;
+    close($fh);
+    rename $file, $rename;
+
+    my $stats;
+    while ( $output =~ /([a-z]++)\s*+:\s*+([0-9]++)/gcm ) {
+        $stats->{$1} = $2;
+    }
+
+    unless ( exists $stats->{size} && exists $stats->{inodes} ) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "$file must have 'size' and 'inodes' attributes."
+        );
+    }
+
+    # Both attributes must have integer values.
+    unless ( $stats->{size} =~ /^[0-9]+$/ && $stats->{inodes} =~ /^[0-9]+$/ )
+    {
+        $plugin->exit(
+            status => 'UNKNOWN',
+            message =>
+                "$file 'size' and 'inodes' attribute values must be integers."
+        );
+    }
+
+    $plugin->check_thresholds(
+        stats       => $stats,
+        upshot_keys => [qw(inodes size)],
+        exit        => "yes"
     );
 }
-
-# Both attributes must have integer values.
-unless ( $stats->{size} =~ /^[0-9]+$/ && $stats->{inodes} =~ /^[0-9]+$/ ) {
-    $plugin->exit(
-        status => 'UNKNOWN',
-        message =>
-            "$file 'size' and 'inodes' attribute values must be integers."
-    );
-}
-
-$plugin->check_thresholds(
-    stats       => $stats,
-    upshot_keys => [qw(inodes size)],
-    exit        => "yes"
-);
 
 #------------------------------------------------------------------------------
