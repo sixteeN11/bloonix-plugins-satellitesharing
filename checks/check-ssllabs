@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Bloonix::Plugin;
 use JSON;
+use File::Temp qw(:mktemp);
+use Date::Format qw(time2str);
 
 #------------------------------------------------------------------------------
 #
@@ -16,7 +18,7 @@ use JSON;
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
-my $plugin = Bloonix::Plugin->new( version => '0.5' );
+my $plugin = Bloonix::Plugin->new( version => '0.6' );
 $plugin->info(
     join( " ",
         "This plugin checks a domain and gives it an SSL grade.",
@@ -58,10 +60,11 @@ $plugin->add_option(
 );
 
 $plugin->example(
-    description => "Warn when blunix.com's SSLLabs scan grade is worse than A",
-    arguments   => [
-        domain  => 'blunix.com',
-        grade => 'A'
+    description =>
+        "Warn when blunix.com's SSLLabs scan grade is worse than A",
+    arguments => [
+        domain => 'blunix.com',
+        grade  => 'A'
     ]
 );
 
@@ -69,73 +72,176 @@ my $opt = $plugin->parse_options;
 
 #------------------------------------------------------------------------------
 
-###########     Verify basic pre-requisites are satisfied.         ############
+###########              ############
 #
-# 1. Results file exists, is not empty, and its contents can be read.
-# 2. Data format matches expectations (JSON with expected attributes).
+# What is the status of the cron job run?
+#
+# - Have we processed the cron job's output before?
+# - Has the cron job run since the last time we processed its output?
+# - Did the last cron job run produce an error?
+#
+# - We've processed the cron job's output before if a .last_processed file
+#   exists (we create that file).
+# - An err.log file exists if the last run of the cron job produced an error.
+# - A $domain.json file exists if the last cron job run did not produce an
+#   error and we haven't processed those results.
+#
+# The cron job could be writing the error file our the output file as we read
+# it so do prevent the two processes from stomping on each other by doing it
+# atomically, rename the file to be read and then read the renamed file.
+#
+
+my $CHECK          = 'ssllabs';
+my $LOG_DIR        = '/var/cache/bloonix';
+my $ERROR_LOG      = "$LOG_DIR/$CHECK.err.log";
+my $RESULT         = "$LOG_DIR/${CHECK}_$opt->{domain}.json";
+my $LAST_PROCESSED = "$LOG_DIR/${CHECK}_$opt->{domain}.last_processed";
+
+# Implementations of mktemp(), tmpnam(), and tempnam() are provided, but should
+# be used with caution since they return only a filename that was valid when
+# function was called, so cannot guarantee that the file will not exist by the
+# time the caller opens the filename.
+#
+# ($fh, $filename) = tempfile($template, DIR => $your_dir, UNLINK => 0);
 
 local $/;
-my $file = "/var/cache/bloonix/ssllabs_$opt->{domain}.json";
-open( my $fh, "<", $file )
-    or $plugin->exit(
-    status  => 'UNKNOWN',
-    message => "Cannot open $file: $!."
-    );
 
-my $output = <$fh>;
-close($fh);
+my $tmp = mktemp("$LOG_DIR/.tmp.$CHECK.XXXXXXXXXX");
 
-my $results;
-eval { $results = decode_json $output; };
-if ($@) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => "Invalid file format '$file'.  Is not JSON."
-    );
-}
+if ( rename $ERROR_LOG, $tmp ) {
 
-my $grade             = $results->[0]->{endpoints}->[0]->{grade};
-my $gradeTrustIgnored = $results->[0]->{endpoints}->[0]->{gradeTrustIgnored};
+    # An error occcurred during the last cron run.
 
-if ($grade) {
+    if ( open( my $fh, "<", $tmp ) ) {
 
-    my $pass = 0;    # Assume failure by default.
-    my ( $min_letter_grade, $min_qualifier ) = $opt->{grade} =~ /^(.)(.?)/;
-    my ( $letter,           $qualifier )     = $grade =~ /^(.)(.?)/;
+        my $err = <$fh>;
+        chomp($err);
 
-    if ( $letter lt $min_letter_grade ) {
-        $pass = 1;    # 'A' is less than 'B' but is a better grade.
-    } elsif ( $letter eq $min_letter_grade ) {
-        if ($min_qualifier) {
-            if ( $min_qualifier eq '-' ) {
-                $pass = 1;    # Can't get a worse grade for a given letter.
-            } else {
-                $pass = 1 if $qualifier && $qualifier eq '+';
-            }
-        } else {
-            $pass = 1 unless $qualifier && $qualifier eq '-';
-        }
+        my $mtime;
+        (   undef, undef, undef, undef, undef,
+            undef, undef, undef, undef, $mtime,
+        ) = stat($fh);
+        close($fh);
+        unlink $tmp;
+
+        my $date = time2str( '%C', $mtime );
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cron job run on $date error: $err"
+        );
+
     }
 
-    if ($pass) {
+    unlink $tmp;
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Error during last cron job run."
+    );
+
+}
+
+# Has there been a cron job run that we haven't processed?
+if ( rename $RESULT, $tmp ) {
+
+    # Process the results from the last cron run.
+    process_result($tmp);
+} else {
+
+    # The cron job hasn't run (or hasn't run since the last time we
+    # processed it's output).
+
+    # If there is no cron job output to process (so no statistics to send),
+    # just report the last time the cron job run (ie the time of the last
+    # results we processed).
+
+    if ( -e $LAST_PROCESSED ) {
+        my $mtime;
+        (   undef, undef, undef, undef, undef,
+            undef, undef, undef, undef, $mtime,
+        ) = stat($LAST_PROCESSED);
+        my $date = time2str( '%C', $mtime );
         $plugin->exit(
-            status => 'OK',
-            message =>
-                "SSL grade=$grade, gradeTrustIgnored=$gradeTrustIgnored"
+            status  => 'OK',
+            message => "No new data. Cron job's last run ended at: $date."
         );
-    } else {
+    }
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "Cron job has not been run."
+    );
+
+}
+
+sub process_result {
+
+    my $file = shift;
+    my $fh;
+    unless ( open( $fh, "<", $file ) ) {
+        rename $file, $LAST_PROCESSED;
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cannot open '$RESULT' $!."
+        );
+    }
+
+    my $output = <$fh>;
+    close($fh);
+    rename $file, $LAST_PROCESSED;
+
+    my $results;
+    eval { $results = decode_json $output; };
+    if ($@) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Invalid file format '$file'.  Is not JSON."
+        );
+    }
+
+    my $grade = $results->[0]->{endpoints}->[0]->{grade};
+    my $gradeTrustIgnored
+        = $results->[0]->{endpoints}->[0]->{gradeTrustIgnored};
+
+    if ($grade) {
+
+        my $pass = 0;    # Assume failure by default.
+        my ( $min_letter_grade, $min_qualifier )
+            = $opt->{grade} =~ /^(.)(.?)/;
+        my ( $letter, $qualifier ) = $grade =~ /^(.)(.?)/;
+
+        if ( $letter lt $min_letter_grade ) {
+            $pass = 1;    # 'A' is less than 'B' but is a better grade.
+        } elsif ( $letter eq $min_letter_grade ) {
+            if ($min_qualifier) {
+                if ( $min_qualifier eq '-' ) {
+                    $pass = 1;   # Can't get a worse grade for a given letter.
+                } else {
+                    $pass = 1 if $qualifier && $qualifier eq '+';
+                }
+            } else {
+                $pass = 1 unless $qualifier && $qualifier eq '-';
+            }
+        }
+
+        if ($pass) {
+            $plugin->exit(
+                status => 'OK',
+                message =>
+                    "SSL grade=$grade, gradeTrustIgnored=$gradeTrustIgnored"
+            );
+        }
+
         $plugin->exit(
             status => 'WARNING',
             message =>
                 "SSL grade=$grade is worse than minimum grade=$opt->{grade}"
         );
+
     }
 
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => "SSL grade not found in '$RESULT'."
+    );
 }
-
-$plugin->exit(
-    status  => 'UNKNOWN',
-    message => " SSL results for '$opt->{domain}' not found in results file . "
-);
 
 #------------------------------------------------------------------------------
