@@ -96,7 +96,7 @@ my $opt = $plugin->parse_options;
 my $CHECK          = 'ssllabs';
 my $LOG_DIR        = '/var/cache/bloonix';
 my $ERROR_LOG      = "$LOG_DIR/$CHECK.err.log";
-my $RESULT         = "$LOG_DIR/${CHECK}_$opt->{domain}.json";
+my $RESULT         = $opt->{test} || "$LOG_DIR/${CHECK}_$opt->{domain}.json";
 my $LAST_PROCESSED = "$LOG_DIR/${CHECK}_$opt->{domain}.last_processed";
 
 # Implementations of mktemp(), tmpnam(), and tempnam() are provided, but should
