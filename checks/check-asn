@@ -21,7 +21,7 @@ use Bloonix::IPC::Cmd;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => "Expected ASN",
     option      => "asn",
@@ -52,51 +52,55 @@ $opt->{timeout} ||= 0;
 # 2. Can execute dig command.
 # 3. Can execute awk command.
 
-my $exe;
-chomp( $exe = `which whois` );
-unless ($exe) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => "Cannot find 'whois' command. Is whois installed?"
-    );
-}
+unless ( $opt->{test} ) {
+    my $exe;
+    chomp( $exe = `which whois` );
+    unless ($exe) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cannot find 'whois' command. Is whois installed?"
+        );
+    }
 
-chomp( $exe = `which dig` );
-unless ($exe) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => "Cannot find 'dig' command. Is dig installed?"
-    );
-}
+    chomp( $exe = `which dig` );
+    unless ($exe) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cannot find 'dig' command. Is dig installed?"
+        );
+    }
 
-chomp( $exe = `which awk` );
-unless ($exe) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => "Cannot find 'awk' command. Is awk installed?"
-    );
+    chomp( $exe = `which awk` );
+    unless ($exe) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => "Cannot find 'awk' command. Is awk installed?"
+        );
+    }
 }
 
 my $cmd
-    = 'whois -h whois.cymru.com '
+    = $opt->{test}
+    ? "cat $opt->{test}"
+    : 'whois -h whois.cymru.com '
     . '$(dig +short myip.opendns.com @resolver1.opendns.com) '
     . '| awk \'FNR==2{print $1}\'';
 
-
 my $asn;
-eval { 
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    chomp( $asn = `$cmd` ); 
+    chomp( $asn = `$cmd` );
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
