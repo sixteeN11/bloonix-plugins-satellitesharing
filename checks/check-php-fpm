@@ -74,14 +74,18 @@ if ( $opt->{host} ) {
 }
 
 #------------------------------------------------------------------------------
-#
 
 my ($content);
+my $cmd
+    = $opt->{test}
+    ? "cat $opt->{test} 2>&1"
+    : "$curl $opt->{url} 2>>/dev/null";
+
 eval {
     $SIG{__DIE__} = sub { alarm(0) };
     $SIG{ALRM}    = sub { die "timeout\n" };
     alarm( $opt->{timeout} );
-    $content = qx{$curl $opt->{url} 2>>/dev/null};
+    $content = `$cmd`;
 
     if ( $? > 0 ) {
         my $err = $? >> 8;
