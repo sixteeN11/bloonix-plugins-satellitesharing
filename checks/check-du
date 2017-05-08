@@ -107,6 +107,7 @@ sub check_cronjob_status {
 
     local $/;
     my $tmp = mktemp("$log_dir/.tmp.$check.XXXXXXXXXX");
+    warn ("Results   : $results_file\nTemp    : $tmp\n");
 
     if ( rename $error_log, $tmp ) {
 
@@ -140,8 +141,6 @@ sub check_cronjob_status {
 
     }
 
-    my $last_processed = "$results_file.last_processed";
-
     # Has there been a cron job run that we haven't processed?
     unless ( rename $results_file, $tmp ) {
 
@@ -152,11 +151,11 @@ sub check_cronjob_status {
        # just report the last time the cron job run (ie the time of the last
        # results we processed).
 
-        if ( -e $last_processed ) {
+        if ( -e $LAST_PROCESSED ) {
             my $mtime;
             (   undef, undef, undef, undef, undef,
                 undef, undef, undef, undef, $mtime,
-            ) = stat($last_processed);
+            ) = stat($LAST_PROCESSED );
             my $date = time2str( '%C', $mtime );
             $plugin->exit(
                 status  => 'OK',
