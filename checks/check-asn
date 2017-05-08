@@ -15,6 +15,8 @@ use Bloonix::IPC::Cmd;
 #               host's public IP.
 # License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
 #
+# Test with statements like the one below:
+# perl -I ./t/lib ./checks/check-asn --asn 1234 --test ./t/asn-blank.dat | perl -MJSON -e 'local $/; $json = <>; $r = decode_json($json); print $r->{status} eq "UNKNOWN" ? "PASS" : "FAIL";' && echo ": Blank ASN when 1234 epxected"
 #------------------------------------------------------------------------------
 
 ###########     Integrate into Bloonix plugin infrastructure.      ############
@@ -81,7 +83,7 @@ unless ( $opt->{test} ) {
 
 my $cmd
     = $opt->{test}
-    ? "cat $opt->{test}"
+    ? "cat $opt->{test} 2>&1"
     : 'whois -h whois.cymru.com '
     . '$(dig +short myip.opendns.com @resolver1.opendns.com) '
     . '| awk \'FNR==2{print $1}\'';
@@ -119,7 +121,7 @@ if ( $? & 127 ) {
 if ( $? >> 8 ) {
     $plugin->exit(
         status  => 'UNKNOWN',
-        message => 'Command failed with exit value ' . ( $? >> 8 )
+        message => $asn
     );
 }
 
