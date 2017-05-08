@@ -195,7 +195,7 @@ my @COUNTERS = (
 
 #------------------------------------------------------------------------------
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
 $plugin->example(
@@ -221,22 +221,22 @@ if ( !$varnishstat ) {
 }
 
 my $stat = {};
-my $cmd  = 'varnishstat -1 2>&1';
+my $cmd = $opt->{test} ? "cat $opt->{test} 2>&1" : 'varnishstat -1 2>&1';
 my @output;
-eval { 
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    @output = `$cmd`; 
+    @output = `$cmd`;
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
-
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
