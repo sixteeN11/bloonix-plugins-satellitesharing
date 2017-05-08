@@ -18,7 +18,7 @@ use JSON;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => 'Instance ID',
     option      => 'instance',
@@ -77,31 +77,37 @@ $opt->{timeout} ||= 0;
 # 1. Can execute aws command.
 # 2. aws command execution successful.
 
+
 my $exe;
-chomp( $exe = `which aws` );
-unless ($exe) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => 'Cannot find aws command.'
-    );
+unless ( $opt->{test} ) {
+    chomp( $exe = `which aws` );
+    unless ($exe) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => 'Cannot find aws command.'
+        );
+    }
 }
 
 my $cmd
-    = "$exe ec2 describe-instance-status --output json --region $opt->{region} --instance-ids $opt->{instance} 2>&1";
+    = $opt->{test}
+    ? "cat $opt->{test} 2>&1"
+    : "$exe ec2 describe-instance-status --output json --region $opt->{region} --instance-ids $opt->{instance} 2>&1";
 my $output;
-eval { 
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    chomp( $output = `$cmd` ); 
+    chomp( $output = `$cmd` );
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
