@@ -19,6 +19,8 @@ use Date::Format qw(time2str);
 ###########     Integrate into Bloonix plugin infrastructure.      ############
 
 my $plugin = Bloonix::Plugin->new( version => '0.6' );
+$plugin->has_timeout(default => 10);
+
 $plugin->info(
     join( " ",
         "This plugin checks a domain and gives it an SSL grade.",
@@ -189,11 +191,24 @@ sub process_result {
     rename $file, $LAST_PROCESSED;
 
     my $results;
-    eval { $results = decode_json $output; };
+    eval { 
+        local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
+        alarm $opt->{timeout};
+        $results = decode_json $output; 
+        alarm(0);
+    };
     if ($@) {
+
+        if ($@ =~ /alarm/) {
+            $plugin->exit(
+                status  => 'CRITICAL',
+                message => "Timed out after $opt->{timeout} seconds." : $@
+            );
+        }
+
         $plugin->exit(
             status  => 'UNKNOWN',
-            message => "Invalid file format '$file'.  Is not JSON."
+            message => "Invalid file format '$file'.  $@."
         );
     }
 
