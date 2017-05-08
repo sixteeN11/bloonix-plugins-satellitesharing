@@ -17,7 +17,7 @@ use Bloonix::Plugin;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => 'Firewall chain',
     option      => 'chain',
@@ -97,31 +97,34 @@ my $opt = $plugin->parse_options;
 # Cannot rely on shorewall's exit status to determine success of command.
 
 my $exe;
-chomp( $exe = `which shorewall` );
-unless ($exe) {
-    $plugin->exit(
-        status => 'UNKNOWN',
-        message =>
-            "Cannot find 'shorewall' command. Has shorewall been installed?"
-    );
+unless ( $opt->{test} ) {
+    chomp( $exe = `which shorewall` );
+    unless ($exe) {
+        $plugin->exit(
+            status => 'UNKNOWN',
+            message =>
+                "Cannot find 'shorewall' command. Has shorewall been installed?"
+        );
+    }
 }
 
-my $cmd = "$exe show $opt->{chain} 2>&1";
+my $cmd
+    = $opt->{test} ? "cat $opt->{test} 2>&1" : "$exe show $opt->{chain} 2>&1";
 my @output;
-eval { 
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    @output = `$cmd`; 
+    @output = `$cmd`;
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
-
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
