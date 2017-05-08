@@ -18,7 +18,7 @@ use JSON;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => 'uWSGI Stats Server',
     option      => 'server',
@@ -78,30 +78,38 @@ my $opt = $plugin->parse_options;
 # 2. Can connect to uWSGI Stats Server.
 # 3. uwsgi command execution successful.
 
-my $exe = $opt->{executable} || `which uwsgi`;
-chomp($exe);
-unless ( $exe && -x $exe ) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => 'Cannot find or execute uwsgi command.'
-    );
+my $exe;
+unless ( $opt->{test} ) {
+    $exe = $opt->{executable} || `which uwsgi`;
+    chomp($exe);
+    unless ( $exe && -x $exe ) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => 'Cannot find or execute uwsgi command.'
+        );
+    }
 }
 
-my $cmd = "$exe --connect-and-read $opt->{server} 2>&1";
+my $cmd
+    = $opt->{test}
+    ? "cat $opt->{test} 2>&1"
+    : "$exe --connect-and-read $opt->{server} 2>&1";
+
 my $output;
-eval { 
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    chomp( $output = `$cmd` ); 
+    chomp( $output = `$cmd` );
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
