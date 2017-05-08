@@ -123,6 +123,13 @@ if ( $? >> 8 ) {
     );
 }
 
+unless ($asn) {
+    $plugin->exit(
+        status  => 'UNKNOWN',
+        message => 'Failed to get ASN'
+    );
+}
+
 #------------------------------------------------------------------------------
 
 ##########       Command successfully executed, process ASN.       ############
