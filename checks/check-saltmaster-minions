@@ -18,7 +18,7 @@ use JSON;
 
 my $plugin = Bloonix::Plugin->new( version => '0.4' );
 
-$plugin->has_timeout(default => 10);
+$plugin->has_timeout( default => 10 );
 $plugin->add_option(
     name        => 'Minions accepted',
     option      => 'minions',
@@ -77,37 +77,46 @@ my $opt = $plugin->parse_options;
 #
 
 my $cmd;
-chomp( $cmd = `which salt-key` );
-unless ($cmd) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => 'Cannot find salt-key command.'
-    );
+unless ( $opt->{test} ) {
+    chomp( $cmd = `which salt-key` );
+    unless ($cmd) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => 'Cannot find salt-key command.'
+        );
+    }
+
+    chmop( $cmd = `which salt` );
+    unless ($cmd) {
+        $plugin->exit(
+            status  => 'UNKNOWN',
+            message => 'Cannot find salt command.'
+        );
+    }
 }
 
-chmop( $cmd = `which salt` );
-unless ($cmd) {
-    $plugin->exit(
-        status  => 'UNKNOWN',
-        message => 'Cannot find salt command.'
-    );
-}
+my ( $test_file1, $test_file2 ) = split '|', $opt->{test} if $opt->{test};
 
 my $output;
-eval { 
+$cmd
+    = $opt->{test}
+    ? "cat $test_file1 2>&1"
+    : "salt-key --out json";
+
+eval {
     local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
     alarm $opt->{timeout};
-    chomp( $output = `salt-key --out json` ); 
+    chomp( $output = `$cmd` );
     alarm(0);
 };
 if ($@) {
     $plugin->exit(
         status  => 'CRITICAL',
-        message => $@ eq "alarm\n" ? 
-            "Timed out after $opt->{timeout} seconds." : $@
+        message => $@ eq "alarm\n"
+        ? "Timed out after $opt->{timeout} seconds."
+        : $@
     );
-} 
-
+}
 
 if ( $? == -1 ) {
     $plugin->exit(
@@ -227,7 +236,9 @@ unless (@hosts) {
 }
 
 $cmd
-    = "salt --timeout 5 --out json -E '"
+    = $opt->test
+    ? "cat $test_file2 2>&1"
+    : "salt --timeout 5 --out json -E '"
     . ( join '|', @hosts )
     . "' test.ping";
 chomp( $output = `$cmd` );
