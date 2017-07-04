@@ -1,0 +1,12 @@
+plugin {
+    id 3000011
+    plugin Repmgr.Check
+    command check-repmgr
+    datatype statistic
+    category Database
+    netaccess no
+    worldwide yes
+    prefer localhost
+    abstract Repmgr postgresql replication monitoring
+    description Monitors health of postgresql replication using repmgr.
+}

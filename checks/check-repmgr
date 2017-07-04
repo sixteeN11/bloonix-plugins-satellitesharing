@@ -1,0 +1,227 @@
+#!/usr/bin/perl
+
+#------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+use Bloonix::Plugin;
+use Bloonix::IPC::Cmd;
+
+#------------------------------------------------------------------------------
+#
+# Author      : Ebow Halm <ejh@cpan.org>
+# Created     : Jun 2017.
+# Description : Bloonix repmr plugin to monitor postgresql replication.
+# License     : Apache 2.0. Copyright (C) 2017 Ebow Halm.
+#
+#------------------------------------------------------------------------------
+
+###########     Integrate into Bloonix plugin infrastructure.      ############
+
+my $plugin = Bloonix::Plugin->new( version => '0.1' );
+$plugin->has_timeout( default => 10 );
+
+$plugin->info(
+    join( " ",
+        'This plugin checks the health of a postgresql replication cluster',
+        'by monitoring it with the repmgr application. It requires repmgr to',
+        'have been installed.' )
+);
+
+$plugin->add_option( name        => "Expected Master",
+                     option      => "master",
+                     example     => "db1",
+                     value_type  => "string",
+                     mandatory   => 1,
+                     description => "Repmgr name of master postgresql server."
+);
+
+$plugin->add_option(
+         name        => "Repmgr path",
+         option      => "config",
+         example     => "/var/odd/location/repmgr.conf",
+         value_type  => "string",
+         mandatory   => 0,
+         description => "repmgr config file location if not /etc/repmgr.conf."
+);
+
+$plugin->add_option(name        => "Repmgr path",
+                    option      => "cmd",
+                    example     => "/opt/pg/bin/repmgr",
+                    value_type  => "string",
+                    mandatory   => 0,
+                    default     => '/etc/repmgr.conf',
+                    description => "repmgr command location if not in \$PATH."
+);
+
+$plugin->example( description => "Verify master and all standbys are up.",
+                  arguments   => [ msater => 'db1' ] );
+
+my $opt = $plugin->parse_options;
+$opt->{timeout} ||= 0;
+
+#------------------------------------------------------------------------------
+
+###########     Verify basic pre-requisites are satisfied.         ############
+#
+# 1. Can execute repmgr command.
+# 2. Repmgr config file exists
+
+my ($exe, $config);
+unless ( $opt->{test} ) {
+    chomp( $exe = $opt->{cmd} || `which repmgr` );
+    unless ($exe) {
+        $plugin->exit(
+               status  => 'UNKNOWN',
+               message => "Cannot find 'repmgr' command. Is repmgr installed?"
+        );
+    }
+
+    $config = $opt->{config} || '/etc/repmgr.conf';
+    unless ( -r $config ) {
+        $plugin->exit(
+                 status  => 'UNKNOWN',
+                 message => "Cannot read repmgr configuration file '$config'."
+        );
+    }
+}
+
+my $cmd
+    = $opt->{test} ? "cat $opt->{test} 2>&1" : "$exe -f $config cluster show";
+
+my @output;
+eval {
+    local $SIG{ALRM} = sub { die "alarm\n" };    # NB: \n required
+    alarm $opt->{timeout};
+    eval { @output = `$cmd`; };
+    alarm(0);
+};
+if ($@) {
+    $plugin->exit( status  => 'CRITICAL',
+                   message => $@ eq "alarm\n"
+                   ? "Timed out after $opt->{timeout} seconds."
+                   : $@
+    );
+}
+
+if ( $? == -1 ) {
+    $plugin->exit( status  => 'UNKNOWN',
+                   message => "Failed to execute: $!" );
+}
+
+if ( $? & 127 ) {
+    $plugin->exit( status  => 'UNKNOWN',
+                   message => 'Command died with signal ' . ( $? & 127 ) . '.'
+    );
+}
+
+if ( my $exit_code = $? >> 8 ) {
+    my %STATUS = ();
+    $plugin->exit( status  => 'UNKNOWN',
+                   message => $STATUS{$exit_code} );
+}
+
+#------------------------------------------------------------------------------
+
+##########       Command successfully executed, interpret results. ############
+
+# - Get name of master server
+# - Get status of all servers in cluster.
+
+# Repmgr examples:
+
+# repmgr 2.0 and postgres 9.1
+# repmgr -f /etc/repmgr/repmgr.conf cluster show
+# Role      | Connection String
+# * master  | host=db-prod-ms47ox-10-3-105-192.vandelay.io
+#   standby | host=db-prod-ms47ox-10-3-104-92.vandelay.io
+#   FAILED  | host=db-prod-lu8spc-10-3-104-145.vandelay.io
+
+# repmgr -f /etc/repmgr/repmgr.conf cluster show
+# Role      | Connection String
+# * master  | host=10.10.10.50 dbname=repmgr user=repmgr
+# * master  | host=10.10.10.60 dbname=repmgr user=repmgr
+#   witness | host=10.10.10.70 dbname=repmgr user=repmgr port=5499
+
+# Repmgr example from official documentation
+# $ repmgr -f /etc/repmgr.conf cluster show
+#
+# Role      | Name  | Upstream | Connection String
+# ----------+-------|----------|----------------------------------------
+# * master  | node1 |          | host=db_node1 dbname=repmgr user=repmgr
+#   standby | node2 | node1    | host=db_node2 dbname=repmgr user=repmgr
+#   standby | node3 | node2    | host=db_node3 dbname=repmgr user=repmgr
+
+# So depending on the repmgr version, 'Name' and 'Upstream' columns exist.
+# Newer versions have them, older ones don't.
+#
+# perl -d -I ./t/lib ./checks/check-repmgr --test ./t/repmgr.1.dat --master db-prod-ms47ox-10-3-105-192.vandelay.io
+# perl -d -I ./t/lib ./checks/check-repmgr --test ./t/repmgr.2.dat --master 10.10.10.50
+# perl -d -I ./t/lib ./checks/check-repmgr --test ./t/repmgr.3.dat --master node1
+
+chomp(@output);
+my ( @masters, @standbys, @failed, @witnesses );
+
+foreach my $line (@output) {
+    $line =~ s/^\s*//;
+    my @fields = split /\s+\|\s+/, $line;
+
+    next if @fields < 2;    # Skip the '----' used to differentiate headers
+    next if $fields[0] eq 'Role';    # Skip header row
+    if (@fields == 3) {
+        push @fields, $fields[2];
+        $fields[2] = '';
+    }
+
+    my ($host) = @fields == 4 ? $fields[1] : $fields[1] =~ /host=([^\s]+)/;
+
+    if ( $fields[0] =~ /^\s*\*/ ) {
+        push @masters, $host;
+    } elsif ( $fields[0] eq 'standby' ) {
+        push @standbys, $host;
+    } elsif ( $fields[0] eq 'FAILED' ) {
+        ($host) = $fields[-1] =~ /host=([^\s]+)/;
+        push @failed, $host;
+    } elsif ( $fields[0] eq 'witness' ) {
+        push @witnesses, $host;
+    }
+}
+
+unless (@masters) {
+    $plugin->exit(
+            status  => 'CRITICAL',
+            message => 'No master!'
+                . ( @failed   ? ' Unreachable: ' . join ', ', @failed   : '' )
+                . ( @standbys ? ' Standby: ' . join ', ',    @standbys : '' )
+                . ( @witnesses ? ' Witness: ' . join ', ', @witnesses : '' )
+    );
+}
+
+if (@failed) {
+    $plugin->exit(
+                 status  => 'WARNING',
+                 message => 'Master up, but unreachable nodes: ' . join ', ',
+                 @failed
+    );
+}
+
+if ( $opt->{master} ne $masters[0] ) {
+    $plugin->exit(
+            status  => 'WARNING',
+            message => 'Master: '
+                . ( join ', ', @masters )
+                . " is not expected master '$opt->{master}'."
+                . ( @standbys  ? ' Standby: ' . join ', ',  @standbys  : '' )
+                . ( @witnesses ? ' Witness: ' . join ', ', @witnesses : '' )
+    );
+}
+
+$plugin->exit(
+            status  => 'OK',
+            message => 'Master: '
+                . ( join ', ', @masters )
+                . ( @standbys  ? ' Standby: ' . join ', ',  @standbys  : '' )
+                . ( @witnesses ? ' Witness: ' . join ', ', @witnesses : '' )
+);
+
+#------------------------------------------------------------------------------
