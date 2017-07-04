@@ -1,0 +1,4 @@
+Role      | Connection String
+* master  | host=db-prod-ms47ox-10-3-105-192.vandelay.io
+  standby | host=db-prod-ms47ox-10-3-104-92.vandelay.io
+  FAILED  | host=db-prod-lu8spc-10-3-104-145.vandelay.io

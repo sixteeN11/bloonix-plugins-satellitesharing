@@ -1,0 +1,5 @@
+Role      | Name  | Upstream | Connection String
+----------+-------|----------|----------------------------------------
+* master  | node1 |          | host=db_node1 dbname=repmgr user=repmgr
+  standby | node2 | node1    | host=db_node2 dbname=repmgr user=repmgr
+  standby | node3 | node2    | host=db_node3 dbname=repmgr user=repmgr

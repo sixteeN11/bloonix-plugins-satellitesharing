@@ -1,0 +1,4 @@
+Role      | Connection String
+* master  | host=10.10.10.50 dbname=repmgr user=repmgr
+* master  | host=10.10.10.60 dbname=repmgr user=repmgr
+  witness | host=10.10.10.70 dbname=repmgr user=repmgr port=5499
